@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>برمجة العمليات الحسابية في Scratch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one slim control row, then a fixed 1600x900 slide scaled to the screen like a PowerPoint slide.
+   Each slide = short pages; one idea per page, big type, flip cards for questions. */
+:root{
+  --paper:#F2F4F0; --card:#FFFFFF; --ink:#16202F; --muted:#556072; --line:#DCE1DA;
+  --accent:#0B7A62; --canvas:#F9F9FB;
+  --ph-warm:#D99A0B; --ph-show:#2E62D9; --ph-do:#0E9466; --ph-close:#C2491C;
+  --ok:#14A44D; --early:#2E62D9; --late:#D93025;
+  --display:"Readex Pro","IBM Plex Sans Arabic","Segoe UI","Noto Kufi Arabic","Geeza Pro",Tahoma,sans-serif;
+  --body:"IBM Plex Sans Arabic","Segoe UI","Noto Sans Arabic","Geeza Pro",Tahoma,sans-serif;
+  --ev:#FFBF00; --ev-d:#CC9900; --op:#59C059; --op-d:#389438; --var:#FF8C1A; --var-d:#DB6E00;
+  --ctl:#FFAB19; --ctl-d:#CF8B17; --lk:#9966FF; --lk-d:#774DCB; --sn:#5CB1D6; --sn-d:#2E8EB8;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:#DDE2DA;color:var(--ink);font:500 26px/1.6 var(--body);display:flex;flex-direction:column}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.3}
+p{margin:0}
+.ltr{direction:ltr;unicode-bidi:isolate;display:inline-block}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- one-row control bar ---------- */
+.bar{flex:none;background:var(--ink);color:#F4F6F8;display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:6px 12px;font-size:15px;line-height:1.3}
+.grp{display:flex;align-items:center;gap:6px}
+.tb{background:#243046;border:1px solid #3A4862;border-radius:8px;padding:5px 11px;color:#fff;font-weight:600;font-size:15px}
+.tb:hover{background:#30405C}
+.tb.pri{background:var(--accent);border-color:var(--accent)}
+.tb:disabled{opacity:.35;cursor:default}
+.bar select{background:#243046;border:1px solid #3A4862;border-radius:8px;padding:5px 8px;color:#fff;max-width:290px;font-size:15px}
+.pos{direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums;font-weight:700;color:#C9D2DF;min-width:58px;text-align:center}
+.lesson{flex:1 1 220px;display:flex;align-items:center;gap:8px;min-width:200px}
+.el{font:700 18px/1 var(--display);direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums;background:#0E1522;border-radius:8px;padding:6px 9px}
+.track{position:relative;flex:1;height:10px;border-radius:999px;overflow:hidden;display:flex;background:#243046;min-width:80px}
+.track .sg{height:100%;opacity:.45;border-left:1px solid rgba(255,255,255,.4)}
+.sg.warm{background:var(--ph-warm)}.sg.show{background:var(--ph-show)}.sg.do{background:var(--ph-do)}.sg.close{background:var(--ph-close)}
+.fill{position:absolute;top:0;bottom:0;right:0;width:0;background:rgba(255,255,255,.35)}
+.clock{font:700 22px/1 var(--display);direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums;min-width:78px;text-align:center;background:#0E1522;border-radius:8px;padding:5px 8px}
+.clock.low{color:#FFC34D}
+.clock.done{background:var(--late);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.5}}
+
+/* ---------- stage: fixed 16:9 slide ---------- */
+.stage{flex:1;position:relative;overflow:hidden}
+.frame{position:absolute;top:50%;left:50%;width:1600px;height:900px}
+.slide{display:none;position:absolute;inset:0;background:var(--card);padding:18px 40px 24px;flex-direction:column;box-shadow:0 10px 40px rgba(16,24,40,.18)}
+.slide.on{display:flex}
+.shead{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:17px;line-height:1.3}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 12px;font-weight:600;background:#EEF1EC;color:var(--muted);white-space:nowrap}
+.chip.warm,.chip.show,.chip.do,.chip.close{color:#fff}
+.chip.warm{background:var(--ph-warm)}.chip.show{background:var(--ph-show)}.chip.do{background:var(--ph-do)}.chip.close{background:var(--ph-close)}
+.pgc{direction:ltr;unicode-bidi:isolate}
+.tchip{transition:background .3s,color .3s}
+.tchip.ok{background:var(--ok);color:#fff}.tchip.early{background:var(--early);color:#fff}.tchip.late{background:var(--late);color:#fff}
+.go{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px;font-weight:700;color:var(--accent);white-space:nowrap}
+.mini{flex:1;display:flex;height:24px;border-radius:7px;overflow:hidden;min-width:260px}
+.mini div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;opacity:.25;white-space:nowrap;overflow:hidden;border-left:1px solid #fff}
+.mini div.cur{opacity:1}
+.mini .warm{background:var(--ph-warm)}.mini .show{background:var(--ph-show)}.mini .do{background:var(--ph-do)}.mini .close{background:var(--ph-close)}
+.pages{flex:1;min-height:0;position:relative;overflow:hidden}
+.pg{display:none;height:100%}
+.pg.on{display:flex;flex-direction:column;gap:22px}
+.pg.on>*{animation:up .45s both}
+.pg.on>*:nth-child(2){animation-delay:.08s}.pg.on>*:nth-child(3){animation-delay:.16s}.pg.on>*:nth-child(4){animation-delay:.24s}
+.pg.nm>*{animation:none!important}
+@keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.85)}70%{transform:scale(1.04)}100%{opacity:1;transform:none}}
+.pop{animation:pop .45s both}
+
+/* type */
+.slide h2{font-size:46px}
+.sub{font-size:28px;color:var(--muted)}
+.big{font-size:40px;font-family:var(--display);font-weight:600;line-height:1.4}
+.huge{font-size:64px;font-family:var(--display);font-weight:700;line-height:1.25}
+.row{display:flex;gap:22px;align-items:stretch}
+.col{display:flex;flex-direction:column;gap:18px}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.card{border:2px solid var(--line);border-radius:22px;padding:22px 26px;background:#fff;display:flex;flex-direction:column;gap:12px}
+.card h3{font-size:32px}
+.tint{background:#F6F8F4}
+.center{align-items:center;justify-content:center;text-align:center}
+.grow{flex:1}
+.tag{align-self:flex-start;font-size:19px;font-weight:700;border-radius:8px;padding:2px 12px;background:#EEF1EC;color:var(--muted)}
+.lv1{background:#DCEBFF!important;color:#1D4ED8!important}.lv2{background:#FFF1C2!important;color:#8A6200!important}.lv3{background:#D6F5E3!important;color:#11743F!important}
+.legend{align-self:center;display:flex;gap:12px;font-size:20px;font-weight:700}
+.legend span{border-radius:999px;padding:3px 14px}
+.amb{align-self:center;display:inline-flex;align-items:center;gap:10px;background:#E6F7FF;color:#0B5C86;border:2px solid #8FD3F5;border-radius:999px;padding:6px 20px;font-weight:700;font-size:22px}
+.calm{align-self:center;display:inline-flex;align-items:center;gap:10px;background:#F2ECFF;color:#4B2AA8;border-radius:14px;padding:6px 18px;font-weight:700;font-size:21px}
+table.rub td,table.rub th{font-size:22px;text-align:right;padding:8px 14px}
+table.rub td:first-child{font-weight:700;white-space:nowrap;text-align:center}
+.dojo{align-self:center;display:inline-flex;align-items:center;gap:10px;background:#EFE9FF;color:#4B2AA8;border:2px solid #C9B8FF;border-radius:999px;padding:8px 22px;font-weight:700;font-size:24px}
+table.t{border-collapse:collapse;width:100%;font-size:28px}
+table.t th,table.t td{border:2px solid var(--line);padding:10px 16px;text-align:center}
+table.t th{background:#F1F4EF;font-family:var(--display)}
+
+/* buttons that reveal */
+.rv{align-self:center;border:3px dashed var(--accent);background:#fff;color:var(--accent);border-radius:14px;padding:8px 26px;font-weight:700;font-size:24px}
+.rv:hover{background:#EAF5F1}
+.rv.small{font-size:19px;padding:4px 14px;border-width:2px}
+.ans{background:#FFF6DC;border:2px solid #F1D48A;border-radius:14px;padding:10px 18px;font-weight:700}
+
+/* flip question card */
+.qc{flex:1;display:flex;flex-direction:column;gap:18px;perspective:1600px;min-height:0}
+.qi{flex:1;display:grid;transition:transform .7s cubic-bezier(.3,.7,.2,1);transform-style:preserve-3d;min-height:0}
+.qc.flipped .qi{transform:rotateY(180deg)}
+.qf{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:30px;padding:36px 60px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:24px}
+.qf.front{background:linear-gradient(135deg,#7B5CFF,#2F9BFF);color:#fff;box-shadow:0 14px 34px rgba(80,90,255,.25)}
+.qf.front .qn{background:rgba(255,255,255,.25)}
+.qf.back{transform:rotateY(180deg);background:#FFF6DC;border:4px solid #F1C24A;color:var(--ink)}
+.qn{font-size:24px;font-weight:700;background:rgba(255,255,255,.14);border-radius:999px;padding:4px 18px}
+.qf.back .qn{background:#F1C24A;color:#3A2A00}
+.qf .qt{font:700 52px/1.4 var(--display)}
+.qf .qa{font:700 44px/1.45 var(--display)}
+.flip.wait{background:#5B6577}
+.flip{align-self:center;border:0;border-radius:16px;background:var(--accent);color:#fff;font-weight:700;font-size:26px;padding:10px 34px}
+
+/* small flip tiles */
+.tile{perspective:900px;cursor:pointer;border:0;background:none;padding:0;text-align:center}
+.tile .ti{display:grid;transition:transform .55s;transform-style:preserve-3d;height:100%}
+.tile.flipped .ti{transform:rotateY(180deg)}
+.tile .tf{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:18px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:2px solid var(--line);background:#fff;min-height:150px}
+.tile .tb2{transform:rotateY(180deg);background:#FFF6DC;border-color:#F1C24A;font:700 40px/1.3 var(--display)}
+.tile .hint{font-size:17px;color:var(--muted);font-weight:600}
+
+/* v11 */
+.pc2{flex:none;position:relative;width:520px;height:420px;border-radius:20px;background:#3B4252;border:12px solid #232836;padding:16px}
+.mb2{position:relative;width:100%;height:100%;border-radius:10px;background:#17643F;background-image:linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px);background-size:20px 20px}
+.cmp{position:absolute;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.cmp>b{position:absolute;top:-16px;right:-16px;width:42px;height:42px;border-radius:50%;background:#FFC34D;color:#3A2A00;font:800 24px/42px var(--display);text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.cpu{top:36px;right:40px;width:130px;height:130px;background:#AEB5C2;border:4px dashed #D5DAE3}
+.cpu .die{width:70px;height:70px;background:#6B7383;border-radius:6px;box-shadow:inset 0 0 0 6px #8F97A6}
+.ram{top:30px;right:210px;width:60px;height:300px;flex-direction:row;gap:10px;background:none}
+.ram i{display:block;width:22px;height:100%;background:#0E7A43;border:3px solid #9BE3BC;border-radius:4px;background-image:repeating-linear-gradient(#1A1F2B 0 26px,transparent 26px 36px);background-size:12px 100%;background-repeat:no-repeat;background-position:center}
+.hdd{bottom:30px;right:40px;width:140px;height:150px;background:#C7CCD6}
+.hdd .plat{width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,#6B7383 12%,#E8EBF0 14%,#AEB5C2 70%)}
+.psu{bottom:30px;left:24px;width:150px;height:140px;background:#2A2F3B}
+.psu .grill{width:100px;height:100px;border-radius:50%;background:repeating-radial-gradient(circle,#2A2F3B 0 6px,#5A6273 6px 9px)}
+.pcl{position:absolute;bottom:-46px;left:50%;transform:translateX(-50%);font-weight:700;font-size:22px;color:var(--muted);white-space:nowrap}
+.tnum{width:46px;height:46px;border-radius:50%;background:#FFC34D;color:#3A2A00;font:800 26px/46px var(--display);text-align:center}
+.fb.fbram{display:flex;align-items:center;gap:30px;font-size:32px;text-align:right}
+.fb.fbram[hidden]{display:none!important}
+.ramstick{position:relative;width:300px;height:80px;background:#0E7A43;border-radius:8px;border-bottom:12px solid #E2B33A;display:flex;gap:10px;align-items:center;justify-content:center;flex:none}
+.ramstick i{width:32px;height:44px;background:#1A1F2B;border-radius:3px}
+.ramstick span{position:absolute;bottom:-34px;font-size:20px;color:var(--muted)}
+.cab{width:430px;background:#0E7A43;border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:12px;border-bottom:16px solid #E2B33A;box-shadow:0 10px 24px rgba(0,0,0,.18)}
+.cabt{color:#fff;font:700 26px/1 var(--display);text-align:center;padding:4px}
+.drw{display:flex;align-items:center;justify-content:space-between;background:#FFF3E3;border:4px solid var(--var);border-radius:12px;padding:8px 16px;height:78px}
+.drw .lab{background:var(--var);color:#fff;font:700 28px/1 var(--display);padding:8px 18px;border-radius:10px}
+.drw .vl{font:800 44px/1 var(--display);color:var(--ink);transition:opacity .4s,transform .4s;min-width:90px;text-align:center}
+.drw .vl.e{opacity:.25}
+.drw.pop2 .vl{animation:fl .7s}
+.cablog{min-height:46px;background:#F1F4EF;border-radius:12px;padding:6px 16px;font-size:24px;font-weight:700;color:var(--var-d)}
+table.t.map td,table.t.map th{font-size:30px;padding:12px 18px}
+table.t.map td:last-child{color:var(--var-d);font-weight:700}
+.ok2,.no2{font:700 34px/1.3 var(--display);border-radius:12px;padding:4px 16px}
+.ok2{background:#E6F6EE;color:#0B6B4A}.no2{background:#FDECEA;color:#B3261E}
+#algo .st.ghost{opacity:1;transform:none;border-style:solid}
+#algo .st .blk{transition:opacity .5s}
+#algo .st.ghost .blk{opacity:0}
+#algo{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+#algo .st{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:14px;align-items:center}
+#algo .st .k{grid-column:1/-1;justify-self:start}
+#algo .st b{grid-row:span 1}
+#algo .st p{font-size:30px}
+#algo .st .blk{grid-column:1/-1}
+#algo .st .blk .canvas{zoom:1.15}
+/* v10 */
+.aphead{display:flex;align-items:center;gap:20px}
+.apptag{flex:none;background:linear-gradient(90deg,#FF8A3D,#FF4D8D);color:#fff;font:800 42px/1 var(--display);padding:12px 30px;border-radius:18px;box-shadow:0 6px 16px rgba(255,77,141,.3)}
+.pc{position:relative;flex:none;width:470px;height:420px;border-radius:18px;background:#4A5163;border:10px solid #2C3140;padding:18px}
+.pc .mb{position:relative;width:100%;height:100%;background:#1F7A4D;border-radius:10px;background-image:linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px);background-size:22px 22px}
+.pc .cp{position:absolute;display:flex;align-items:center;justify-content:center;gap:6px;font-size:52px;border-radius:10px}
+.pc .cp b{position:absolute;top:-14px;right:-14px;width:38px;height:38px;border-radius:50%;background:#FFC34D;color:#3A2A00;font:700 22px/38px var(--display);text-align:center}
+.pc .c1{top:30px;right:40px;width:120px;height:110px;background:#C9CED8}
+.pc .c2{top:30px;right:190px;width:150px;height:110px;flex-direction:column;gap:8px;padding:10px}
+.pc .c2 i{display:block;width:100%;height:14px;background:#0E5132;border:2px solid #9BE3BC;border-radius:3px}
+.pc .c3{bottom:30px;right:40px;width:150px;height:120px;background:#BFC5D2}
+.pc .c4{bottom:30px;left:20px;width:140px;height:120px;background:#3A3F4C}
+.pc .c5{top:40px;left:20px;width:80px;height:80px;border-radius:50%;background:#2C3140}
+.pc .pcl{position:absolute;bottom:-44px;left:50%;transform:translateX(-50%);font-weight:700;font-size:22px;color:var(--muted);white-space:nowrap}
+.ramdemo{display:flex;flex-direction:column;align-items:center;gap:16px}
+.ramdemo .cells{display:flex;gap:18px}
+.ramdemo .cell{width:200px;border:4px solid var(--var);border-radius:16px;background:#FFF3E3;display:flex;flex-direction:column;align-items:center;overflow:hidden;transition:.5s}
+.ramdemo .cell .nm{background:var(--var);color:#fff;width:100%;text-align:center;font:700 28px/1.5 var(--body);direction:ltr}
+.ramdemo .cell .vl{font:700 54px/1.5 var(--display);direction:ltr;transition:opacity .5s,transform .5s}
+.ramdemo .stick{position:relative;width:880px;height:70px;background:#1F7A4D;border-radius:8px;display:flex;gap:18px;align-items:center;justify-content:center;border-bottom:12px solid #E2B33A}
+.ramdemo .stick i{width:90px;height:40px;background:#1A1F2B;border-radius:4px}
+.ramdemo .stick span{position:absolute;left:14px;color:#fff;font-weight:700}
+.ramdemo .ramnote{display:none;flex-direction:column;align-items:center;gap:6px}
+.ramdemo.off .vl{opacity:0;transform:scale(.3)}
+.ramdemo.off .cell{background:#EEF0F4;border-color:#B8BFCC}
+.ramdemo.off .stick{filter:grayscale(1) brightness(.7)}
+.ramdemo.off .ramnote{display:flex;animation:fl .8s}
+.vpal{position:relative;width:440px;flex:none;border:2px solid var(--line);border-radius:16px;background:#fff;padding:18px;display:flex;flex-direction:column;gap:14px}
+.vpal .vcat{display:flex;align-items:center;gap:10px;font-weight:700;font-size:24px}
+.vpal .vcat i{width:30px;height:30px;border-radius:50%;background:var(--var)}
+.vpal .vrow{display:flex;align-items:center;gap:10px}
+.vpal .vrep{background:var(--var);color:#fff;border-radius:999px;padding:4px 18px;font-weight:700;font-size:24px;direction:ltr;outline:3px solid #F1C24A}
+.vpal .cur{font-size:30px}
+.vpal .cmenu{align-self:flex-start;margin-inline-start:60px;border:3px solid #F1C24A;border-radius:10px;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.15);display:flex;flex-direction:column}
+.vpal .cmenu span{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:8px 14px;font-size:22px;font-weight:600}
+.vpal .cmenu span+span{border-top:1px solid var(--line)}
+.vpal .stn{width:34px;height:34px;font-size:18px}
+.kstage{position:relative;width:440px;height:300px;border:3px solid #C8CDD6;border-radius:14px;background:#fff}
+.kstage .monitor{position:absolute;top:10px;right:10px;margin:0}
+.kstage .cat{position:absolute;top:50%;left:50%;transform:translate(-50%,-40%);font-size:120px;background:none;border:0;cursor:pointer;transition:transform .15s}
+.kstage .cat:active{transform:translate(-50%,-40%) scale(.9)}
+.pathwho{align-self:center;background:#EEF4FF;border:2px solid #9DBBF5;border-radius:14px;padding:8px 22px;font-size:26px;font-weight:600}
+.path2{border-radius:24px;border:5px solid;padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}
+.path2 .ph{font:800 40px/1 var(--display)}
+.path2 p{font:700 34px/1.35 var(--display)}
+.path2.blue{border-color:#5B8DEF;background:#EEF4FF}.path2.yellow{border-color:#E9B825;background:#FFF7DB}.path2.green{border-color:#2FB36B;background:#E9F8EF}
+table.rub.big5{width:900px;align-self:center}
+table.rub.big5 td{font-size:38px;padding:14px 26px;font-weight:700}
+.check.pc3{flex-direction:column;justify-content:center;text-align:center;font-size:28px;gap:8px;padding:14px}
+.check.pc3 .icon{font-size:48px}
+.thanks{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;border-radius:30px;background:linear-gradient(135deg,#00B39F,#2F9BFF 55%,#7B5CFF)}
+.thanks .hw{display:flex;align-items:center;gap:24px;background:#fff;border-radius:24px;padding:20px 40px;font:700 50px/1.3 var(--display);color:var(--ink);box-shadow:0 10px 30px rgba(0,0,0,.15)}
+.thanks .ty{font:800 88px/1.2 var(--display);color:#fff;text-shadow:0 4px 18px rgba(0,0,0,.2)}
+.thanks .ty2{font:700 56px/1.2 var(--display);color:#FFF4C2}
+/* lesson v8 */
+.defn{display:flex;flex-direction:column;align-items:center;gap:6px;background:linear-gradient(120deg,#E6F8EC,#EAF2FF);border:3px solid #9FDDB4;border-radius:26px;padding:18px 30px;text-align:center}
+.defn .dw{font:700 54px/1.2 var(--display);color:var(--op-d)}
+.defn .dd2{font:700 40px/1.35 var(--display)}
+.defn .dx{font-size:26px;color:var(--muted);font-weight:600}
+.optype{border:4px solid var(--c);border-radius:24px;background:#fff;padding:18px 24px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.optype h3{font-size:34px}.optype p{font-size:28px;font-weight:600}
+.pal{display:flex;border:2px solid var(--line);border-radius:18px;overflow:hidden;background:#fff;flex:none}
+.pal .cats{display:flex;flex-direction:column;background:#F6F7FB;border-inline-end:2px solid var(--line);padding:6px 0}
+.pal .cats span{display:flex;flex-direction:column;align-items:center;font-size:15px;font-weight:600;color:var(--muted);padding:4px 10px}
+.pal .cats i{width:26px;height:26px;border-radius:50%;display:block;border:2px solid rgba(0,0,0,.12)}
+.pal .cats span.on{background:#DFF3E3;color:var(--op-d);box-shadow:inset -5px 0 0 var(--op)}
+.pal .cats span.on i{box-shadow:0 0 0 4px #fff,0 0 0 7px var(--op);animation:blink 1.2s ease-in-out 4}
+.pal .blks{padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.pal .blks b{font-size:20px}
+.pal .blks .canvas{flex-direction:column;gap:10px}
+.shp{display:inline-block;width:64px;height:34px;background:var(--op);border:2px solid var(--op-d)}
+.shp.oval{border-radius:999px}.shp.hex{clip-path:polygon(18% 0,82% 0,100% 50%,82% 100%,18% 100%,0 50%);border:0}
+.anat{align-self:center;display:flex;align-items:flex-start;gap:26px;background:var(--op);border:4px solid var(--op-d);border-radius:999px;padding:22px 40px 16px}
+.anat .slotw{display:flex;flex-direction:column;align-items:center;gap:8px}
+.anat .sl{min-width:150px;height:110px;border-radius:999px;background:#fff;display:flex;align-items:center;justify-content:center;font:700 64px/1 var(--display);padding:0 26px;direction:ltr}
+.anat .sl.var2{background:var(--var);color:#fff;font-size:44px}
+.anat .lb{background:#fff;color:var(--op-d);border-radius:10px;padding:2px 14px;font-weight:700;font-size:24px}
+.anat .opm{font:700 80px/110px var(--display);color:#fff}
+.anat.small{transform:scale(.8);margin:-10px 0}
+.opbtns{display:flex;gap:16px;justify-content:center}
+.opbtns button{width:96px;height:96px;border-radius:50%;border:4px solid var(--op-d);background:#fff;color:var(--op-d);font:700 56px/1 var(--display)}
+.opbtns button.on{background:var(--op);color:#fff}
+.watch{display:flex;flex-direction:column;align-items:center}
+.watch .band{width:120px;height:56px;background:#3B4252}
+.watch .band.t{border-radius:20px 20px 0 0}.watch .band.b{border-radius:0 0 20px 20px}
+.watch .face{width:220px;height:220px;border-radius:56px;background:radial-gradient(circle at 30% 25%,#2A3348,#0E1320);border:10px solid #8A93A6;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;box-shadow:0 10px 24px rgba(0,0,0,.25)}
+.watch .lbw{font-size:22px;color:#9FE3C5;font-weight:700}
+.watch .num{font:700 58px/1.1 var(--display);color:#5CF0B0;direction:ltr}
+.game{position:relative;width:360px;height:250px;border-radius:22px;background:linear-gradient(180deg,#1C2A6B,#3B5BDB 70%,#2F9E44 70%);border:6px solid #1A1F36;overflow:hidden}
+.game .hud{position:absolute;top:10px;right:14px;background:rgba(255,255,255,.92);border-radius:12px;padding:2px 14px;font-weight:700;font-size:24px}
+.game .star{position:absolute;top:70px;left:80px;font-size:60px;animation:bob 1.6s ease-in-out infinite}
+.game .star.got{animation:got .6s}
+@keyframes got{40%{transform:scale(1.8) rotate(25deg);filter:drop-shadow(0 0 14px #FFD54A)}}
+.b.miss{background:#fff;border:3px dashed #8A93A6;color:#8A93A6;font:700 30px/1 var(--display);min-width:230px;justify-content:center;animation:blink 1.4s ease-in-out infinite}
+.fillb{display:none}
+.mcq.solved .b.miss{display:none}.mcq.solved .fillb{display:block;animation:fl .8s}
+.miss2 .choices.col1 .ch{padding:8px 14px}
+.game .pl{position:absolute;bottom:58px;right:60px;font-size:64px}
+@keyframes bob{50%{transform:translateY(-10px) rotate(10deg)}}
+.flash{animation:fl .6s}
+@keyframes fl{0%{filter:brightness(1.6) drop-shadow(0 0 10px #FFD54A);transform:scale(1.06)}100%{filter:none;transform:none}}
+.dlg{width:460px;border-radius:14px;overflow:hidden;border:4px solid #F1C24A;background:#fff;box-shadow:0 10px 26px rgba(0,0,0,.15)}
+.dlg .dh{background:#4C97FF;color:#fff;font-weight:700;font-size:24px;padding:10px 18px;display:flex;justify-content:space-between}
+.dlg .db{padding:16px 20px;display:flex;flex-direction:column;gap:12px;font-size:20px}
+.dlg .din{border:2px solid #C8CDD6;border-radius:10px;padding:8px 14px;font-size:24px;display:flex;justify-content:space-between;align-items:center}
+.dlg .drad{display:flex;justify-content:space-between;color:var(--muted)}
+.dlg .dbt{display:flex;gap:12px;justify-content:center}
+.dlg .dbt span{border:2px solid #C8CDD6;border-radius:10px;padding:6px 18px;font-weight:700;display:flex;gap:8px;align-items:center}
+.dlg .dbt .ok{background:#4C97FF;color:#fff;border-color:#4C97FF}
+.dlg .stn{width:34px;height:34px;font-size:18px}
+.monitor{margin-top:18px;display:flex;align-items:center;gap:10px;background:#EEF1F6;border:2px solid #C8CDD6;border-radius:8px;padding:4px 10px;font-weight:700;font-size:22px}
+.monitor b{background:var(--var);color:#fff;border-radius:8px;padding:0 14px}
+.scat{position:relative;min-height:400px;background:#FBFCF7;border:3px dashed #C9D3C2;border-radius:24px}
+.scat .sc{position:absolute;left:var(--sx);top:var(--sy);transform:rotate(var(--r));transition:left .9s cubic-bezier(.5,0,.2,1),top .9s cubic-bezier(.5,0,.2,1),transform .9s;font:700 26px/1.3 var(--display);color:#4A3200;text-align:center;display:flex;align-items:center;justify-content:center;gap:10px;width:18%;min-height:76px;padding:8px 12px}
+.scat .sc.ov{background:#FFE7B8;border:3px solid #E2A33A;border-radius:999px;width:15%}
+.scat .sc.rc{background:#FFE7B8;border:3px solid #E2A33A;border-radius:10px}
+.scat .sc.dm{background:#F7C76A;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);width:25%;min-height:130px;padding:22px 50px;font-size:23px}
+.scat .sc b{position:absolute;top:-16px;right:-12px;width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;opacity:0;transform:scale(.3);transition:.4s .7s}
+.scat .sc.dm b{position:static;flex:none}
+.scat .fla{position:absolute;font:700 40px/1 var(--display);color:var(--muted);opacity:0;transition:opacity .4s .8s;display:flex;flex-direction:column;align-items:center}
+.scat .fla small{font-size:18px;background:var(--ok);color:#fff;border-radius:8px;padding:0 8px}
+.scat .fla.tagn{font-size:20px;background:#555F70;color:#fff;border-radius:8px;padding:2px 10px}
+.scat.solved .sc{left:var(--ox);top:var(--oy);transform:none}
+.scat.solved .sc b,.scat.solved .fla{opacity:1;transform:none}
+/* storyline */
+.lbl{font-size:13px;color:#AEB8C7;font-weight:600}
+.shead{gap:12px}
+.ltitle{font:700 18px/1.2 var(--display);color:var(--ink);background:#EEF1EC;border-radius:10px;padding:6px 12px;white-space:nowrap}
+.stbar{flex:1;display:flex;align-items:center;gap:8px;min-width:0}
+.stbar .dot{flex:none;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 18px/1 var(--display);background:#E6EAF0;color:#7A8597}
+.stbar .dot.done{background:#BFE8D2;color:#11743F}
+.stbar .dot.cur{background:var(--accent);color:#fff;box-shadow:0 0 0 4px #CDEDE3}
+.stbar .stx{font:700 22px/1.3 var(--display);color:var(--accent);margin-inline-start:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stbar .ctx{font:700 22px/1.3 var(--display);color:var(--muted)}
+.bridge{align-self:flex-start;background:#EAF5F1;color:#0B6B55;border-radius:999px;padding:6px 22px;font-weight:700;font-size:25px}
+.titlebar{background:linear-gradient(120deg,#00B39F 0%,#2F9BFF 60%,#7B5CFF 100%);color:#fff;border-radius:28px;padding:30px 40px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px}
+.titlebar .huge{color:#fff;font-size:84px}.titlebar .sub{color:#F0FFFB}.titlebar .big{color:#fff}
+.route{display:flex;align-items:stretch;gap:12px}
+.route .rs{flex:1;border-radius:24px;border:4px solid var(--c);background:#fff;padding:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
+.route .rs .n{width:64px;height:64px;border-radius:50%;background:var(--c);color:#fff;display:flex;align-items:center;justify-content:center;font:700 34px/1 var(--display)}
+.route .rs .ic{font-size:56px;line-height:1}
+.route .rs p{font:700 32px/1.35 var(--display)}
+.route .ra{align-self:center;font-size:44px;color:var(--muted)}
+.stn{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:50%;background:var(--accent);color:#fff;font:700 22px/1 var(--display);flex:none}
+.mcq{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;text-align:center}
+.qn2{background:#EEF1EC;color:var(--muted);border-radius:999px;padding:4px 18px;font-weight:700;font-size:22px}
+.mq{font:700 52px/1.35 var(--display)}
+.choices{display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+.choices.col1{flex-direction:column;align-items:stretch;width:900px}
+.ch{border:5px solid var(--line);border-radius:24px;background:#fff;padding:14px 22px;transition:transform .15s,border-color .2s,background .2s}
+.ch:hover{transform:translateY(-3px);border-color:#9FB7E8}
+.ch.big2{font:700 44px/1.3 var(--display);min-width:220px;padding:16px 34px}
+.ch.right{border-color:var(--ok);background:#E6F6EE}
+.ch.wrong{border-color:var(--late);background:#FDECEA;opacity:.7}
+.fb{font:700 34px/1.4 var(--display);background:#E6F6EE;color:#0B6B4A;border-radius:18px;padding:12px 26px}
+.act{display:flex;align-items:center;gap:18px;background:#FFF7E6;border:3px solid #F5C58E;border-radius:20px;padding:10px 18px}
+.actgo{border:0;border-radius:14px;background:#FF8A3D;color:#fff;font-weight:700;font-size:24px;padding:8px 22px;white-space:nowrap}
+.actbar{flex:1;height:22px;border-radius:999px;background:#FFE3C4;overflow:hidden}
+.actfill{height:100%;width:100%;background:linear-gradient(90deg,#FF8A3D,#FFC34D);transition:width 1s linear;margin-inline-start:auto}
+.actclock{font:700 46px/1 var(--display);direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums;color:#B4540F;min-width:150px;text-align:center}
+.act.run{border-color:#FF8A3D}
+.act.low .actclock{color:var(--late)}
+.act.done{background:#FDECEA;border-color:var(--late);animation:blink 1s steps(2) 6}
+/* ---------- Scratch blocks ---------- */
+.canvas{background:var(--canvas);background-image:radial-gradient(#E2E5EC 1px,transparent 1px);background-size:18px 18px;border:1px solid #E3E6EC;border-radius:16px;padding:20px 18px 18px;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;zoom:1.5}
+.canvas.md{zoom:1.3}.canvas.lg{zoom:1.75}
+.canvas .cap{width:100%;font-size:14px;color:var(--muted);font-weight:700;margin-bottom:-10px}
+.script{position:relative;z-index:0;display:inline-flex;flex-direction:column;align-items:flex-start;direction:rtl;font:600 15px/1.2 var(--body);color:#fff}
+.b,.ct,.cbt{position:relative;display:inline-flex;align-items:center;gap:6px;padding:8px 12px;min-height:44px;border:1px solid;border-radius:5px;white-space:nowrap}
+.b::before,.ct::before{content:"";position:absolute;top:-1px;right:14px;width:24px;height:7px;background:var(--canvas);border:1px solid;border-color:inherit;border-top:0;border-radius:0 0 5px 5px}
+.b::after,.cbt::after,.ct::after{content:"";position:absolute;bottom:-8px;right:14px;width:24px;height:8px;background:inherit;border:1px solid;border-color:inherit;border-top:0;border-radius:0 0 5px 5px;z-index:2}
+.ct::after{right:30px}
+.ev{background:var(--ev);border-color:var(--ev-d)}.op{background:var(--op);border-color:var(--op-d)}.var{background:var(--var);border-color:var(--var-d)}
+.ctl{background:var(--ctl);border-color:var(--ctl-d)}.lk{background:var(--lk);border-color:var(--lk-d)}.sn{background:var(--sn);border-color:var(--sn-d)}
+.hat{margin-top:16px;padding-top:12px;border-radius:0 5px 5px 5px;min-width:120px}
+.hat::before{top:-17px;right:-1px;width:92px;height:30px;border:1px solid;border-color:inherit;border-bottom:0;background:inherit;border-radius:50% 50% 0 0/100% 100% 0 0;z-index:-1}
+.cb{display:inline-flex;flex-direction:column;align-items:flex-start;background:transparent!important;border:0!important}
+.cb .ct{border-radius:5px 5px 0 5px;min-width:150px}
+.cb .cm{display:flex;align-items:stretch;min-height:30px;margin-top:-1px}
+.cb .arm{width:16px;flex:none;border:1px solid;border-top:0;border-bottom:0}
+.cb.ctl .arm,.cb.ctl .ct,.cb.ctl .cbt{background:var(--ctl);border-color:var(--ctl-d)}
+.cb .inner{padding:0 0 9px;display:flex;flex-direction:column;align-items:flex-start}
+.cb .cbt{min-height:26px;padding:2px 12px;margin-top:-1px;border-radius:0 0 5px 5px;min-width:110px;justify-content:flex-end}
+.r{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;min-height:32px;border-radius:999px;border:1px solid;white-space:nowrap}
+.h{display:inline-flex;align-items:center;gap:6px;padding:3px 18px;min-height:32px;white-space:nowrap;clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,14px 100%,0 50%)}
+.h.op{background:var(--op)}.h.sn{background:var(--sn)}.h.slot{background:var(--ctl-d);min-width:60px}
+.i{display:inline-flex;align-items:center;justify-content:center;min-width:28px;min-height:26px;padding:1px 9px;background:#fff;color:#575E75;border-radius:999px;border:1px solid rgba(0,0,0,.14);font-weight:600}
+.i.empty{min-width:36px}
+.dd{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:5px;border:1px solid rgba(0,0,0,.15);font-weight:600}
+.var .dd{background:var(--var-d);color:#fff}.sn .dd{background:var(--sn-d);color:#fff}
+.dd::after{content:"▾";font-size:11px}
+.flag{width:20px;height:20px;vertical-align:middle}
+.mark{outline:3px solid var(--late);outline-offset:3px;border-radius:999px}
+
+/* visuals */
+.icon{font-size:64px;line-height:1}
+.mission{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.ms{border-radius:22px;padding:18px 22px;display:flex;gap:16px;align-items:center;border:2px solid var(--line);background:#fff;position:relative;overflow:hidden}
+.ms::before{content:"";position:absolute;inset:0 0 0 auto;width:10px;background:var(--c)}
+.ms .n{flex:none;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 30px/1 var(--display);background:var(--c);color:#fff}
+.ms p{font-size:27px;font-weight:600;line-height:1.4}
+.check{display:flex;align-items:center;gap:18px;border:3px solid var(--line);border-radius:20px;padding:16px 22px;background:#fff;font-size:28px;font-weight:600;text-align:right;width:100%}
+.check .bx{flex:none;width:52px;height:52px;border-radius:14px;border:3px solid #9AA5B4;display:flex;align-items:center;justify-content:center;font-size:34px;color:#fff}
+.check.done{border-color:var(--ok);background:#EAF7EF}
+.check.done .bx{background:var(--ok);border-color:var(--ok)}
+.check.done .bx::after{content:"✓"}
+.box3d{width:260px;height:190px;position:relative;margin:30px auto 0}
+.box3d .bd{position:absolute;inset:40px 0 0;background:#E9B26B;border:4px solid #B07B33;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.box3d .lid{position:absolute;top:22px;left:-8px;right:-8px;height:30px;background:#D99A4E;border:4px solid #B07B33;border-radius:8px;transform:rotate(-8deg);transform-origin:right}
+.box3d .lab{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);background:var(--var);color:#fff;font:700 24px/1 var(--body);padding:6px 16px;border-radius:999px;border:2px solid var(--var-d);direction:ltr}
+.box3d .val{position:absolute;top:-30px;left:50%;transform:translateX(-50%);font:700 54px/1 var(--display);color:var(--ink);animation:drop 2.4s ease-in-out infinite}
+@keyframes drop{0%{transform:translate(-50%,-40px);opacity:0}30%{opacity:1}60%,100%{transform:translate(-50%,70px);opacity:0}}
+.rule{border-radius:22px;padding:22px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;background:#FFF3E3;border:2px solid #F5C58E}
+.rule p{font-size:27px;font-weight:600}
+.judge{border:3px solid var(--line);border-radius:20px;padding:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#fff;transition:background .3s,border-color .3s}
+.judge .nm{font:700 36px/1.2 var(--body);direction:ltr;unicode-bidi:isolate}
+.judge .nm.ar{direction:rtl}
+.judge .bt{display:flex;gap:10px}
+.judge .bt button{border:2px solid var(--line);background:#fff;border-radius:12px;padding:4px 16px;font-weight:700;font-size:22px}
+.judge .why{font-size:20px;font-weight:600;text-align:center;line-height:1.4}
+.judge.right{border-color:var(--ok);background:#EAF7EF}
+.judge.wrong{border-color:var(--late);background:#FDECEA}
+.fc{display:flex;flex-direction:column;align-items:center;gap:8px;font-weight:700;font-size:24px}
+.fc .ov,.fc .rc{background:#FFE7B8;border:3px solid #E2A33A;color:#4A3200;text-align:center}
+.fc .ov{border-radius:999px;padding:8px 34px}.fc .rc{border-radius:10px;padding:10px 20px}
+.fc .dm{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);padding:34px 64px;background:#F7C76A;color:#4A3200;text-align:center}
+.fc .ar{color:var(--muted);font-size:28px;line-height:1}
+.fc .split{display:flex;gap:26px;align-items:flex-start;justify-content:center}
+.fc .br{display:flex;flex-direction:column;align-items:center;gap:8px}
+.fc .yes,.fc .no{font-size:19px;color:#fff;border-radius:8px;padding:1px 12px}
+.fc .yes{background:var(--ok)}.fc .no{background:#555F70}
+.steps{display:flex;gap:12px;align-items:stretch}
+.st{flex:1;border-radius:20px;padding:16px 18px;border:3px solid;background:#fff;display:flex;flex-direction:column;gap:6px;transition:opacity .4s,transform .4s}
+.st b{font:700 44px/1 var(--display)}
+.st p{font-size:25px;font-weight:600;line-height:1.35}
+.st.ghost{opacity:.12;transform:scale(.96);border-style:dashed}
+.st.in{border-color:var(--sn)}.st.pr{border-color:var(--op)}.st.out{border-color:var(--lk)}
+.k{align-self:flex-start;font-size:17px;font-weight:700;border-radius:8px;padding:0 10px;color:#fff}
+.k.in{background:var(--sn-d)}.k.pr{background:var(--op-d)}.k.out{background:var(--lk-d)}
+.arw{align-self:center;color:var(--muted);font-size:34px}
+.path{border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:12px;border:3px solid}
+.path h3{font-size:34px}
+.path ol{margin:0;padding-inline-start:30px;font-size:25px}
+.path.blue{background:#EEF4FF;border-color:#5B8DEF}.path.yellow{background:#FFF7DB;border-color:#E9B825}.path.green{background:#EAF7EF;border-color:#2FA463}
+.opts{display:flex;gap:14px;justify-content:center}
+.opt{border:3px solid var(--line);background:#fff;border-radius:14px;padding:8px 22px;font-weight:700;direction:ltr;font-size:28px}
+.opt.right{border-color:var(--ok);background:#E6F6EE;color:#0B6B4A}.opt.wrong{border-color:var(--late);background:#FCEDE6;color:#9A3412}
+.sim{display:flex;gap:16px;align-items:end;justify-content:center}
+.sim label{display:flex;flex-direction:column;font-size:20px;color:var(--muted);font-weight:700}
+.sim input{width:170px;border:2px solid var(--line);border-radius:12px;padding:6px 10px;font-size:36px;font-weight:700;direction:ltr;text-align:center}
+.speech{position:relative;align-self:center;background:#fff;border:3px solid #C8CDD6;border-radius:24px;padding:12px 30px;font:700 40px/1.3 var(--display);text-align:center}
+.speech::after{content:"";position:absolute;bottom:-15px;right:40px;border:14px solid transparent;border-top-color:#C8CDD6;border-bottom:0}
+.self{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.self button{border:4px solid;border-radius:26px;padding:26px 10px;background:#fff;font-weight:700;font-size:30px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.self .g{border-color:#2FA463}.self .y{border-color:#E9B825}.self .rd{border-color:#D9534F}
+.self .cnt{font:700 60px/1 var(--display)}
+.cover{background:linear-gradient(120deg,#00B39F 0%,#2F9BFF 60%,#7B5CFF 100%);color:#fff;border-radius:28px;padding:40px 50px;display:flex;flex-direction:column;gap:14px}
+.cover .huge{color:#fff}
+.cover .sub{color:#F0FFFB}
+.pill{display:flex;align-items:center;gap:16px;background:#fff;border:2px solid var(--line);border-radius:20px;padding:14px 20px;font-size:26px;font-weight:600}
+.pill .e{font-size:44px;line-height:1}
+.tl2{display:flex;flex-direction:column;gap:8px}
+.tl2 .bars{display:flex;height:64px;border-radius:14px;overflow:hidden}
+.tl2 .bars div{display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:19px;line-height:1.2;border-left:2px solid #fff;text-align:center}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="flag" viewBox="0 0 20 20"><path d="M4 2v16" stroke="#3D8C40" stroke-width="2.2" stroke-linecap="round"/><path d="M5 3c3.5-2 6 2 10.5 0v8c-4.5 2-7-2-10.5 0z" fill="#4CBF56" stroke="#3D8C40" stroke-width="1.2" stroke-linejoin="round"/></symbol>
+</svg>
+
+<header class="bar">
+  <div class="grp">
+    <button class="tb" id="prev">→ السابقة</button>
+    <select id="jump" aria-label="انتقل إلى شريحة"></select>
+    <button class="tb pri" id="next">التالية ←</button>
+    <span class="pos" id="pos">1 / 15</span>
+  </div>
+  <div class="lesson">
+    <button class="tb pri" data-lesson="1">▶ الحصة الأولى</button>
+    <button class="tb pri" data-lesson="2">▶ الحصة الثانية</button>
+    <button class="tb" id="lpStop" hidden>■ إنهاء</button>
+    <span class="lbl">زمن الحصة</span><span class="el" id="lpEl" title="زمن الحصة الفعلي">00:00</span>
+    <div class="track" id="track"><div class="fill" id="fill"></div></div>
+  </div>
+  <div class="grp" aria-label="المؤقت">
+    <span class="lbl">مؤقت النشاط</span><span class="clock" id="clock" aria-live="polite">00:00</span>
+    <button class="tb" data-min="1">1 د</button>
+    <button class="tb" data-min="3">3 د</button>
+    <button class="tb" data-min="9" title="المهمة الفردية">9 د</button>
+    <button class="tb" id="tPlay">⏸</button>
+    <button class="tb" id="tReset" title="تصفير">↺</button>
+  </div>
+</header>
+
+<main class="stage" id="stage"><div class="frame" id="frame">
+
+<!-- ================= الحصة الأولى ================= -->
+
+<section class="slide" id="s1" data-p="1" data-from="0" data-to="1" data-ph="warm" data-title="الغلاف والبيئة الآمنة">
+  <div class="shead"></div>
+  <div class="pages">
+    <div class="pg">
+      <div class="cover grow center" style="text-align:center">
+        <span class="sub">المهارات الرقمية · الصف السادس · الوحدة الرابعة: البرمجة باستخدام سكراتش</span>
+        <span class="sub" style="font-size:34px;font-weight:700">الدرس الثاني</span>
+        <span class="huge" style="font-size:100px">برمجة العمليات الحسابية</span>
+        <span class="big" style="color:#fff;font-size:42px">➕ ➖ ✖️ ➗ كيف نجعل سكراتش يحسب لنا ويحفظ النتائج؟</span>
+      </div>
+    </div>
+    <div class="pg">
+      <h2>قبل أن نبدأ</h2>
+      <div class="g2 grow">
+        <div class="card tint">
+          <h3>ممارساتنا الصحية في المعمل</h3>
+          <div class="pill"><span class="e">🧍</span>ظهر مستقيم وقدمان على الأرض</div>
+          <div class="pill"><span class="e">📏</span>50 سم بين عينيك والشاشة</div>
+          <div class="pill"><span class="e">🪑</span>نعمل من مقاعدنا دون تحريك الطاولات، وبنظام الثنائي البرمجي (مبرمج ومراجع) عند طلب المعلم</div>
+        </div>
+        <div class="card tint">
+          <h3>قيمنا وهويتنا الوطنية</h3>
+          <div class="pill"><span class="e">🇸🇦</span>شباب المملكة يبرمجون المستقبل لتحقيق رؤية 2030</div>
+          <div class="pill"><span class="e">🤲</span>نشكر الله على النعم ونحافظ على أجهزة المعمل</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s2" data-p="1" data-from="1" data-to="6" data-ph="warm" data-title="التهيئة: نتذكّر ما تعلمناه">
+  <div class="shead"></div>
+  <div class="pages">
+    <div class="pg">
+      <span class="bridge">🔁 نتذكّر الدرس الأول: التكرار في سكراتش</span>
+      <div class="mcq grow">
+        <span class="qn2">سؤال 1 من 3</span>
+        <p class="mq">نريد أن يتحرك القط <u>حتى</u> يلمس حافة المسرح.<br>أي لبنة نستخدم؟</p>
+        <div class="choices">
+          <button class="ch"><div class="canvas md"><div class="script"><div class="cb ctl"><div class="ct">كرّر <span class="i">10</span> مرة</div><div class="cm"><div class="arm"></div><div class="inner"></div></div><div class="cbt">↻</div></div></div></div></button>
+          <button class="ch"><div class="canvas md"><div class="script"><div class="cb ctl"><div class="ct">كرّر باستمرار</div><div class="cm"><div class="arm"></div><div class="inner"></div></div><div class="cbt">↻</div></div></div></div></button>
+          <button class="ch" data-ok><div class="canvas md"><div class="script"><div class="cb ctl"><div class="ct">كرّر حتى <span class="h slot"></span></div><div class="cm"><div class="arm"></div><div class="inner"></div></div><div class="cbt">↻</div></div></div></div></button>
+        </div>
+        <p class="fb" hidden>✔ (كرّر حتى) تكرّر الحركة حتى يتحقق الشرط: لمس الحافة.</p>
+      </div>
+    </div>
+    <div class="pg">
+      <span class="bridge">🔁 تعلمنا سابقاً العمليات المنطقية</span>
+      <div class="mcq grow">
+        <span class="qn2">سؤال 2 من 3</span>
+        <p class="mq">ما نتيجة هذه العملية المنطقية؟</p>
+        <div class="canvas lg" style="align-self:center;zoom:2.2"><div class="script"><span class="h op"><span class="i">7</span>&gt;<span class="i">5</span></span></div></div>
+        <div class="choices">
+          <button class="ch big2" data-ok>✔ صح</button>
+          <button class="ch big2">✖ خطأ</button>
+        </div>
+        <p class="fb" hidden>✔ صح. العمليات المنطقية تتكون من: أكبر من ( &gt; )، أصغر من ( &lt; )، يساوي ( = ) وناتجها صح أو خطأ.</p>
+      </div>
+    </div>
+    <div class="pg">
+      <span class="bridge">➗ من المقارنة إلى الحساب</span>
+      <div class="mcq grow">
+        <span class="qn2">سؤال 3 من 3</span>
+        <p class="mq">في الرياضيات نكتب <span class="ltr">4 ÷ 2</span><br>كيف نكتبها في البرمجة؟</p>
+        <div class="choices">
+          <button class="ch big2"><span class="ltr">4 ÷ 2</span></button>
+          <button class="ch big2" data-ok><span class="ltr">4 / 2</span></button>
+          <button class="ch big2"><span class="ltr">4 x 2</span></button>
+        </div>
+        <p class="fb" hidden>✔ رمز القسمة في البرمجة ( / ) والناتج 2. الرموز في البرمجة تختلف عن الرياضيات.</p>
+      </div>
+    </div>
+    <div class="pg">
+      <span class="bridge">🧩 مشكلة اليوم</span>
+      <div class="card center grow" style="background:linear-gradient(135deg,#FF8A3D,#FF4D8D);color:#fff;border:0">
+        <span class="icon">🧮 ⌚ 🎮</span>
+        <p class="big" style="color:#FFF8E7">الآلة الحاسبة تجمع، والساعة الذكية تعدّ خطواتك، واللعبة تجمع نقاطك</p>
+        <p class="big" style="font-size:52px">كيف نأمر سكراتش أن يحسب… ثم يحفظ النتيجة؟</p>
+        <p class="big" style="color:#FFF8E7">فكّر، زاوج، شارك</p>
+      </div>
+      <button class="rv" data-show="a2b">اكشف ما نحتاجه</button>
+      <div id="a2b" hidden class="g2">
+        <div class="card center" style="border-color:var(--op)"><div class="canvas md"><div class="script"><span class="r op"><span class="i empty"></span>+<span class="i empty"></span></span></div><div class="script"><span class="r op"><span class="i empty"></span>-<span class="i empty"></span></span></div><div class="script"><span class="r op"><span class="i empty"></span>*<span class="i empty"></span></span></div><div class="script"><span class="r op"><span class="i empty"></span>/<span class="i empty"></span></span></div></div><p class="big">المعامِلات: لنحسب</p></div>
+        <div class="card center" style="border-color:var(--var)"><div class="canvas md"><div class="script"><span class="r var">score</span></div></div><p class="big">المتغيرات: لنحفظ النتيجة</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s3" data-p="1" data-from="6" data-to="7" data-ph="warm" data-title="عنوان الدرس وأهداف الحصة">
+  <div class="shead"></div>
+  <div class="pages">
+    <div class="pg">
+      <div class="titlebar">
+        <span class="sub">عنوان درسنا · الحصة الأولى</span>
+        <span class="huge">برمجة العمليات الحسابية</span>
+        <span class="big">سؤالنا: كيف نجعل سكراتش يحسب لنا ويحفظ النتائج؟</span>
+      </div>
+      <p class="big" style="text-align:center">📌 أهداف الحصة الأولى في 4 محطات:</p>
+      <div class="route grow" data-route="1"></div>
+    </div>
+    <div class="pg">
+      <h2>أنجح اليوم إذا… ✅</h2>
+      <div class="col grow">
+        <button class="check"><span class="bx"></span><b class="stn">1</b>أعرّف المعامِل، وأميّز المعاملات الرياضية من المنطقية، وأحدد مكانها وشكلها في سكراتش</button>
+        <button class="check"><span class="bx"></span><b class="stn">2</b>أبرمج جمع عددين، وأنفّذ تدريب 1 بالمعاملات الحسابية</button>
+        <button class="check"><span class="bx"></span><b class="stn">3</b>أعرّف المتغير وأذكر اسمه وقيمته وأنواعه</button>
+        <button class="check"><span class="bx"></span><b class="stn">4</b>أسمّي المتغيرات وفق شروط التسمية (تدريب 3)</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s4" data-p="1" data-from="7" data-to="15" data-ph="show" data-title="المعاملات: تعريفها وأنواعها ومكانها وأشكالها">
+  <div class="shead"></div>
+  <div class="pages">
+    <div class="pg" data-st="1">
+      <span class="bridge">🔗 في التهيئة اكتشفنا أن البرنامج يحتاج رموزاً ليحسب</span>
+      <div class="defn"><span class="dw">المعامِل <span class="ltr" style="font-size:.7em">(Operator)</span></span><span class="dd2">رمز يمثّل إجراءً محدداً</span><span class="dx">مثال: علامة الجمع ( + ) هي المعامل الذي يمثّل الجمع</span></div>
+      <h2 style="text-align:center">نوعان من المعاملات في سكراتش</h2>
+      <div class="g2 grow">
+        <div class="optype" style="--c:var(--op)">
+          <h3>المعاملات الرياضية (الحسابية)</h3>
+          <div class="canvas md"><div class="script"><span class="r op"><span class="i empty"></span>+<span class="i empty"></span></span></div><div class="script"><span class="r op"><span class="i empty"></span>-<span class="i empty"></span></span></div><div class="script"><span class="r op"><span class="i empty"></span>*<span class="i empty"></span></span></div><div class="script"><span class="r op"><span class="i empty"></span>/<span class="i empty"></span></span></div></div>
+          <p>نستخدمها <b>لنحسب</b> · ناتجها <b>رقم</b></p>
+        </div>
+        <div class="optype" style="--c:var(--op)">
+          <h3>المعاملات المنطقية (المقارنة)</h3>
+          <div class="canvas md"><div class="script"><span class="h op"><span class="i empty"></span>&gt;<span class="i">50</span></span></div><div class="script"><span class="h op"><span class="i empty"></span>&lt;<span class="i">50</span></span></div><div class="script"><span class="h op"><span class="i empty"></span>=<span class="i">50</span></span></div></div>
+          <p>نستخدمها <b>لنقارن</b> · ناتجها <b>صح أو خطأ</b></p>
+        </div>
+      </div>
+    </div>
+    <div class="pg" data-st="1">
+      <h2>أين أجد المعاملات؟ وما أشكالها؟</h2>
+      <div class="row grow" style="align-items:center;gap:40px">
+        <div class="pal">
+          <div class="cats">
+            <span><i style="background:#4C97FF"></i>الحركة</span><span><i style="background:#9966FF"></i>الهيئة</span><span><i style="background:#CF63CF"></i>الصوت</span><span><i style="background:#FFBF00"></i>الأحداث</span><span><i style="background:#FFAB19"></i>التحكم</span><span><i style="background:#5CB1D6"></i>الاستشعار</span><span class="on"><i style="background:#59C059"></i>العمليات</span><span><i style="background:#FF8C1A"></i>المتغيرات</span><span><i style="background:#FF6680"></i>لبناتي</span>
+          </div>
+          <div class="blks">
+            <b>العمليات</b>
+            <div class="canvas" style="zoom:1.15;background:none;border:0;padding:4px">
+              <div class="script"><span class="r op"><span class="i empty"></span>+<span class="i empty"></span></span></div>
+              <div class="script"><span class="r op"><span class="i empty"></span>-<span class="i empty"></span></span></div>
+              <div class="script"><span class="r op"><span class="i empty"></span>*<span class="i empty"></span></span></div>
+              <div class="script"><span class="r op"><span class="i empty"></span>/<span class="i empty"></span></span></div>
+              <div class="script"><span class="h op"><span class="i empty"></span>&gt;<span class="i">50</span></span></div>
+              <div class="script"><span class="h op"><span class="i empty"></span>&lt;<span class="i">50</span></span></div>
+              <div class="script"><span class="h op"><span class="i empty"></span>=<span class="i">50</span></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="col grow">
+          <div class="pill"><span class="e">🟢</span><span><b>المكان:</b> فئة لبنات <b>العمليات</b> (Operators) ولونها أخضر</span></div>
+          <div class="pill"><span class="e"><span class="shp oval"></span></span><span><b>الشكل البيضاوي:</b> المعاملات الرياضية · تعطي رقماً</span></div>
+          <div class="pill"><span class="e"><span class="shp hex"></span></span><span><b>الشكل السداسي:</b> المعاملات المنطقية · تعطي صح أو خطأ</span></div>
+          <div class="pill"><span class="e">🧩</span><span>لا تعمل وحدها: نضعها <b>داخل لبنة أخرى</b> مثل (قل)</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="pg" data-st="1">
+      <h2>أين أضع القيمة الأولى والقيمة الثانية؟</h2>
+      <div class="anat">
+        <div class="slotw"><span class="sl">4</span><span class="lb">القيمة الأولى</span></div>
+        <span class="opm">-</span>
+        <div class="slotw"><span class="sl">2</span><span class="lb">القيمة الثانية</span></div>
+      </div>
+      <p class="big" style="text-align:center">نقرأ اللبنة من اليمين: <b style="color:var(--op-d)">القيمة الأولى</b> ثم المعامل ثم <b style="color:var(--op-d)">القيمة الثانية</b></p>
+      <div class="g2">
+        <div class="card center"><div class="canvas lg"><div class="script"><span class="r op"><span class="i">4</span>-<span class="i">2</span></span></div></div><button class="rv small" data-show="an1">الناتج</button><span class="ans big pop" id="an1" hidden><span class="ltr">4 - 2 = 2</span></span></div>
+        <div class="card center"><div class="canvas lg"><div class="script"><span class="r op"><span class="i">2</span>-<span class="i">4</span></span></div></div><button class="rv small" data-show="an2">الناتج</button><span class="ans big pop" id="an2" hidden><span class="ltr">2 - 4 = -2</span></span></div>
+      </div>
+      <p class="calm" style="align-self:center">💡 في الطرح والقسمة: تغيير مكان القيمتين يغيّر الناتج</p>
+    </div>
+    <div class="pg" data-st="1">
+      <h2>تُكتب العمليات في البرمجة بطريقة مختلفة عن الرياضيات</h2>
+      <div class="row grow" style="gap:40px;align-items:center">
+        <table class="t num" style="width:620px;font-size:36px">
+          <tr><th>العملية</th><th>الرياضيات</th><th>البرمجة</th></tr>
+          <tr><td>الجمع</td><td class="ltr">4 + 2</td><td class="ltr">4 + 2</td></tr>
+          <tr><td>الطرح</td><td class="ltr">4 - 2</td><td class="ltr">4 - 2</td></tr>
+          <tr><td>الضرب</td><td class="ltr">4 × 2</td><td class="ltr" style="color:var(--late);font-weight:800">4 * 2</td></tr>
+          <tr><td>القسمة</td><td class="ltr">4 ÷ 2</td><td class="ltr" style="color:var(--late);font-weight:800">4 / 2</td></tr>
+        </table>
+        <div class="g2 grow">
+          <button class="tile"><div class="ti"><div class="tf"><span class="huge ltr">4 + 2</span><span class="hint">اضغط للناتج</span></div><div class="tf tb2">6</div></div></button>
+          <button class="tile"><div class="ti"><div class="tf"><span class="huge ltr">4 - 2</span><span class="hint">اضغط للناتج</span></div><div class="tf tb2">2</div></div></button>
+          <button class="tile"><div class="ti"><div class="tf"><span class="huge ltr" style="color:var(--op-d)">4 * 2</span><span class="hint">اضغط للناتج</span></div><div class="tf tb2">8</div></div></button>
+          <button class="tile"><div class="ti"><div class="tf"><span class="huge ltr" style="color:var(--op-d)">4 / 2</span><span class="hint">اضغط للناتج</span></div><div class="tf tb2">2</div></div></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s5" data-p="1" data-from="15" data-to="22" data-ph="show" data-title="جمع عددين والعمليات الأربع">
+  <div class="shead"></div>
+  <div class="pages">
+    <div class="pg" data-st="2">
+      <span class="bridge">🔗 عرفنا المعاملات… الآن نستخدمها في برنامج</span>
+      <h2>أنا أعمل: إجراء عملية الجمع (ص 143)</h2>
+      <div class="row grow" style="align-items:center;justify-content:center;gap:50px">
+        <div class="col" style="font-size:28px;font-weight:600">
+          <span class="pill"><b class="stn">1</b>أضف لبنة <b>عند نقر العلم الأخضر</b> من فئة الأحداث</span>
+          <span class="pill"><b class="stn">2</b>أضف لبنة <b>قل ( ) لمدة 2 ثانية</b> من فئة الهيئة</span>
+          <span class="pill"><b class="stn">3</b>اسحب لبنة <b>الجمع</b> من العمليات وأفلتها داخل (قل)</span>
+          <span class="pill"><b class="stn">4</b>اكتب الرقمين اللذين تريد جمعهما</span>
+        </div>
+        <div class="col" style="align-items:center">
+          <div class="canvas lg">
+            <div class="script">
+              <div class="b ev hat">عند نقر <svg class="flag"><use href="#flag"/></svg></div>
+              <div class="b lk">قل <span class="r op"><span class="i">2</span>+<span class="i">3</span></span> لمدة <span class="i">2</span> ثانية</div>
+            </div>
+          </div>
+          <button class="rv" data-show="sp4">ماذا سيقول القط؟</button>
+          <div class="speech pop" id="sp4" hidden>5</div>
+        </div>
+      </div>
+    </div>
+    <div class="pg" data-st="2">
+      <div class="aphead"><span class="apptag">✍️ تطبيق</span><h2>جرّب العمليات الأربع على جهازك</h2></div>
+      <div class="row grow" style="align-items:center;gap:40px">
+        <div class="col grow center">
+          <div class="opbtns" id="calcOps"><button data-op="+" class="on">+</button><button data-op="-">-</button><button data-op="*">*</button><button data-op="/">/</button></div>
+          <div class="sim">
+            <label for="ca">القيمة الأولى<input id="ca" type="number" value="8"></label>
+            <label for="cb">القيمة الثانية<input id="cb" type="number" value="2"></label>
+          </div>
+          <p class="sub" style="text-align:center">غيّر القيم والمعامل، ثم نفّذ اللبنة نفسها في سكراتش</p>
+        </div>
+        <div class="col center grow">
+          <div class="canvas lg">
+            <div class="script">
+              <div class="b ev hat">عند نقر <svg class="flag"><use href="#flag"/></svg></div>
+              <div class="b lk">قل <span class="r op"><span class="i" id="cA">8</span><span id="cOp">+</span><span class="i" id="cB">2</span></span> لمدة <span class="i">2</span> ثانية</div>
+            </div>
+          </div>
+          <div class="speech" id="calcOut">10</div>
+        </div>
+      </div>
+      <span class="dojo">⭐ كل طالب يصل إلى الناتج الصحيح ويشرح سبب ترتيب اللبنات يحصل على +1 في كلاس دوجو</span>
+    </div>
+    <div class="pg" data-st="2">
+      <h2>نحن نعمل: عملية من لبنتين متداخلتين <span class="ltr">2 * 9 - 3</span></h2>
+      <div class="row grow" style="align-items:center;justify-content:center;gap:24px">
+        <div class="card center"><span class="tag">1) لبنة الطرح</span><div class="canvas lg"><div class="script"><span class="r op"><span class="i empty mark"></span>-<span class="i">3</span></span></div></div></div>
+        <span class="arw">←</span>
+        <div class="card center"><span class="tag">2) الضرب داخل خانة القيمة الأولى</span><div class="canvas lg"><div class="script"><span class="r op"><span class="r op"><span class="i">2</span>*<span class="i">9</span></span>-<span class="i">3</span></span></div></div></div>
+      </div>
+      <button class="rv" data-show="r45">اكشف الناتج</button>
+      <div class="ans big pop" id="r45" hidden style="align-self:center"><span class="ltr">(2 * 9) - 3 = 18 - 3 = 15</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s6" data-p="1" data-from="22" data-to="30" data-ph="do" data-title="تدريب 1 والمتغيرات في سكراتش">
+  <div class="shead"></div>
+  <div class="pages">
+    <div class="pg" data-st="2">
+      <div class="aphead"><span class="apptag">✍️ تطبيق</span><h2>تدريب 1 ص 151: نفّذ في سكراتش ثم اقلب البطاقة</h2></div>
+      <div class="legend"><span class="lv1">🔵 للجميع أولاً</span><span class="lv2">🟡 ثم المتوسط</span><span class="lv3">🟢 ثم الإثرائي للأسرع</span></div>
+      <div class="g4 grow">
+        <button class="tile"><div class="ti"><div class="tf"><span class="tag lv1">🔵 أساسي</span><span class="huge ltr">8 - 6</span></div><div class="tf tb2">2</div></div></button>
+        <button class="tile"><div class="ti"><div class="tf"><span class="tag lv1">🔵 أساسي</span><span class="huge ltr">3 * 7</span></div><div class="tf tb2">21</div></div></button>
+        <button class="tile"><div class="ti"><div class="tf"><span class="tag lv1">🔵 أساسي</span><span class="huge ltr">8 / 2</span></div><div class="tf tb2">4</div></div></button>
+        <button class="tile"><div class="ti"><div class="tf"><span class="tag lv1">🔵 أساسي</span><span class="huge ltr">9 / 3</span></div><div class="tf tb2">3</div></div></button>
+      </div>
+      <div class="g3 grow">
+        <button class="tile"><div class="ti"><div class="tf"><span class="tag lv2">🟡 متوسط</span><span class="huge ltr">5 + 4 + 4</span></div><div class="tf tb2"><div class="canvas md"><div class="script"><span class="r op"><span class="r op"><span class="i">5</span>+<span class="i">4</span></span>+<span class="i">4</span></span></div></div>13</div></div></button>
+        <button class="tile"><div class="ti"><div class="tf"><span class="tag lv3">🟢 إثرائي</span><span class="huge ltr">2 * 9 - 3</span></div><div class="tf tb2"><div class="canvas md"><div class="script"><span class="r op"><span class="r op"><span class="i">2</span>*<span class="i">9</span></span>-<span class="i">3</span></span></div></div>15</div></div></button>
+        <button class="tile"><div class="ti"><div class="tf"><span class="tag lv3">🟢 إثرائي</span><span class="huge ltr">8 / 4 + 7</span></div><div class="tf tb2"><div class="canvas md"><div class="script"><span class="r op"><span class="r op"><span class="i">8</span>/<span class="i">4</span></span>+<span class="i">7</span></span></div></div>9</div></div></button>
+      </div>
+      <div class="act" data-min="6"><button class="actgo">▶ شغّل مؤقت النشاط · 6 د</button><div class="actbar"><div class="actfill"></div></div><span class="actclock">06:00</span></div>
+    </div>
+    <div class="pg" data-st="3">
+      <span class="bridge">🔗 حسبنا النواتج… لكن أين نحفظها؟</span>
+      <h2>المتغيرات في سكراتش (ص 144)</h2>
+      <div class="defn"><span class="dw">المتغير</span><span class="dd2">اسم يشير إلى مكان محدد في ذاكرة الحاسب، يُستخدم لتخزين البيانات أثناء تنفيذ البرنامج</span></div>
+      <div class="row grow" style="align-items:center;gap:40px">
+        <div class="col center grow">
+          <div class="anat small">
+            <div class="slotw"><span class="sl var2">counter</span><span class="lb">الاسم</span></div>
+            <span class="opm" style="font-size:40px">=</span>
+            <div class="slotw"><span class="sl">0</span><span class="lb">القيمة</span></div>
+          </div>
+          <div class="canvas lg"><div class="script"><div class="b var">اجعل <span class="dd">counter</span> مساوياً <span class="i">0</span></div></div></div>
+          <p class="big">لكل متغير <span style="color:var(--var-d)">اسم فريد</span> و<span style="color:var(--ph-show)">قيمة</span></p>
+        </div>
+        <div class="col grow">
+          <div class="pill"><span class="e">🟠</span><span>لبنات المتغيرات في فئة <b>المتغيرات</b> (Variables) ولونها برتقالي</span></div>
+          <div class="pill"><span class="e">📦</span><span>في سكراتش متغير جاهز اسمه <b>متغيري</b> (My Variable)</span></div>
+          <div class="pill"><span class="e">🐱</span><span>المتغير ينتمي إلى الكائن الذي أُنشئ فيه، ولكل كائن متغيراته</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="pg" data-st="3">
+      <h2>أمثلة على المتغيرات (ص 145)</h2>
+      <div class="g2 grow">
+        <div class="optype" style="--c:var(--var)">
+          <h3>المتغيرات الرقمية (أرقام)</h3>
+          <div class="canvas lg"><div class="script"><div class="b var">اجعل <span class="dd">classA</span> مساوياً <span class="i">20</span></div><div class="b var">اجعل <span class="dd">classB</span> مساوياً <span class="i">18</span></div></div></div>
+          <p>نجري عليها العمليات الحسابية</p>
+        </div>
+        <div class="optype" style="--c:var(--var)">
+          <h3>المتغيرات النصية (سلاسل نصية)</h3>
+          <div class="canvas lg"><div class="script"><div class="b var">اجعل <span class="dd">MyName</span> مساوياً <span class="i">Khaled</span></div></div></div>
+          <p>تخزّن الأسماء والكلمات</p>
+        </div>
+      </div>
+      <div class="mcq" style="gap:14px">
+        <p class="mq" style="font-size:36px">المتغير <span class="ltr">classA</span> قيمته 20 · ما نوعه؟</p>
+        <div class="choices"><button class="ch big2" data-ok>رقمي</button><button class="ch big2">نصي</button></div>
+        <p class="fb" hidden>✔ رقمي، لأن قيمته رقم.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s7" data-p="1" data-from="30" data-to="37" data-ph="do" data-title="شروط التسمية وتدريب 3 والغلق">
+  <div class="shead"></div>
+  <div class="pages">
+    <div class="pg" data-st="4">
+      <span class="bridge">🔗 كل متغير يحتاج اسماً… فما شروطه؟</span>
+      <div class="aphead"><span class="apptag" style="background:linear-gradient(90deg,#7B5CFF,#2F9BFF)">🧠 استقراء</span><h2>اكتشف شروط تسمية المتغير بنفسك (ص 145)</h2></div>
+      <p class="sub" style="text-align:center">قارن الاسم المقبول ✔ بالمرفوض ✖ … ما الشرط؟ ناقش زميلك ثم اقلب البطاقة</p>
+      <div class="g4 grow">
+        <button class="tile"><div class="ti"><div class="tf"><span class="ok2">✔ النقاط</span><span class="no2">✖ ( بلا اسم )</span><span class="hint">ما الشرط؟ اضغط</span></div><div class="tf tb2" style="font-size:30px">يجب تعيين اسم المتغير عند إنشائه</div></div></button><button class="tile"><div class="ti"><div class="tf"><span class="ok2">✔ سعر_الحليب</span><span class="no2">✖ سعر!الحليب</span><span class="hint">ما الشرط؟ اضغط</span></div><div class="tf tb2" style="font-size:30px">أحرف وأرقام وشرطة سفلية _</div></div></button><button class="tile"><div class="ti"><div class="tf"><span class="ok2">✔ العمر · العمر2</span><span class="no2">✖ العمر · العمر</span><span class="hint">ما الشرط؟ اضغط</span></div><div class="tf tb2" style="font-size:30px">يجب أن يكون الاسم فريداً</div></div></button><button class="tile"><div class="ti"><div class="tf"><span class="ok2">✔ عدد_الطلاب</span><span class="no2">✖ س</span><span class="hint">ما الشرط؟ اضغط</span></div><div class="tf tb2" style="font-size:30px">سهل التذكر وله معنى يمثّل محتواه</div></div></button>
+      </div>
+      <p class="ans" style="align-self:center">✅ يسمح سكراتش بالأسماء العربية والإنجليزية: نستخدم العربية في تطبيقاتنا، ويوصي الكتاب بالإنجليزية للتوافق مع مشاريع سكراتش الأخرى</p>
+    </div>
+    <div class="pg" data-st="4">
+      <div class="aphead"><span class="apptag">✍️ تطبيق</span><h2>لعبة: هل يحقق الاسم شروط التسمية؟ ✔ أم ✖</h2></div>
+      <div class="g4 grow">
+        <div class="judge" data-ok="0" data-why="فيه رمز ! والشرط: أحرف وأرقام وشرطة سفلية"><span class="nm ar">النقاط!</span><div class="bt"><button data-a="1">✔</button><button data-a="0">✖</button></div><span class="why"></span></div>
+        <div class="judge" data-ok="1" data-why="أحرف وشرطة سفلية ومعناه واضح"><span class="nm ar">سعر_الحليب</span><div class="bt"><button data-a="1">✔</button><button data-a="0">✖</button></div><span class="why"></span></div>
+        <div class="judge" data-ok="0" data-why="الشرطة العادية - ليست الشرطة السفلية _"><span class="nm ar">سعر-الحليب</span><div class="bt"><button data-a="1">✔</button><button data-a="0">✖</button></div><span class="why"></span></div>
+        <div class="judge" data-ok="0" data-why="غير فريد: لا يتكرر الاسم لمتغيرين"><span class="nm ar">العمر <span style="font-size:22px">مرتين</span></span><div class="bt"><button data-a="1">✔</button><button data-a="0">✖</button></div><span class="why"></span></div>
+        </div>
+      <div class="act" data-min="2"><button class="actgo">▶ شغّل مؤقت النشاط · 2 د</button><div class="actbar"><div class="actfill"></div></div><span class="actclock">02:00</span></div>
+    </div>
+    <div class="pg" data-st="4">
+      <div class="aphead"><span class="apptag">✍️ تطبيق</span><h2>تدريب 3 ص 152: اكتب اسماً لكل متغير ثم اقلب البطاقة</h2></div>
+      <div class="g3 grow">
+        <button class="tile"><div class="ti"><div class="tf"><span class="icon">🥛</span><span class="big">سعر زجاجة الحليب</span></div><div class="tf tb2">سعر_الحليب</div></div></button>
+        <button class="tile"><div class="ti"><div class="tf"><span class="icon">📝</span><span class="big">درجة الطالب في المادة</span></div><div class="tf tb2">الدرجة</div></div></button>
+        <button class="tile"><div class="ti"><div class="tf"><span class="icon">👨‍👩‍👧</span><span class="big">عدد أفراد الأسرة</span></div><div class="tf tb2">عدد_الأسرة</div></div></button>
+
+      </div>
+      <div class="act" data-min="3"><button class="actgo">▶ شغّل مؤقت النشاط · 3 د</button><div class="actbar"><div class="actfill"></div></div><span class="actclock">03:00</span></div>
+    </div>
+    <div class="pg" data-ph="close" data-from="37" data-to="45">
+      <div class="qc">
+        <div class="qi">
+          <div class="qf front"><span class="qn">تحقّق سريع · المستوى الأول</span><p class="qt">ما المعامل؟ وفي أي فئة نجد<br>المعاملات في سكراتش؟</p></div>
+          <div class="qf back"><span class="qn">الإجابة</span><p class="qa">رمز يمثّل إجراءً محدداً<br>فئة العمليات (الخضراء)</p></div>
+        </div>
+        <button class="flip">اكشف الإجابة</button>
+      </div>
+    </div>
+    <div class="pg" data-ph="close" data-from="37" data-to="45">
+      <div class="qc">
+        <div class="qi">
+          <div class="qf front"><span class="qn">تحقّق سريع · المستوى الثاني 🕵️</span><p class="qt">أراد طالب حساب <span class="ltr">10 - 4</span> فظهر <span class="ltr">-6</span>! أين الخطأ؟</p>
+            <div class="canvas md" style="background-color:#fff"><div class="script"><span class="r op mark"><span class="i">4</span>-<span class="i">10</span></span></div></div>
+          </div>
+          <div class="qf back"><span class="qn">الإجابة</span><p class="qa">وضع 4 في خانة القيمة الأولى.<br>الصحيح: 10 في القيمة الأولى ثم 4</p></div>
+        </div>
+        <button class="flip">اكشف الإجابة</button>
+      </div>
+    </div>
+    <div class="pg" data-ph="close" data-from="37" data-to="45">
+      <h2>قيّم نفسك</h2>
+      <p class="sub" style="text-align:center">لون تقييمك يحدد مسارك في الحصة القادمة: 🔴 ← 🔵 الانطلاق · 🟡 ← 🟡 الإتقان · 🟢 ← 🟢 الابتكار</p>
+      <div class="self grow">
+        <button class="g" data-self><span style="font-size:80px">🟢</span><span>أتقنت تماماً</span><span class="cnt">0</span></button>
+        <button class="y" data-self><span style="font-size:80px">🟡</span><span>أتقنت الأساسيات</span><span class="cnt">0</span></button>
+        <button class="rd" data-self><span style="font-size:80px">🔴</span><span>أحتاج لدعم</span><span class="cnt">0</span></button>
+      </div>
+    </div>
+    <div class="pg" data-ph="close" data-from="37" data-to="45">
+      <h2>ماذا تعلمنا اليوم؟ ✅</h2>
+      <div class="g2">
+        <button class="check"><span class="bx"></span>المعامل رمز يمثّل إجراءً، وأنواعه رياضية ومنطقية</button>
+        <button class="check"><span class="bx"></span>مكانها فئة العمليات: بيضاوية للحساب وسداسية للمقارنة</button>
+        <button class="check"><span class="bx"></span>القيمة الأولى ثم المعامل ثم القيمة الثانية</button>
+        <button class="check"><span class="bx"></span>برمجنا جمع عددين ونفّذنا تدريب 1</button>
+        <button class="check"><span class="bx"></span>المتغير له اسم وقيمة: رقمي أو نصي</button>
+        <button class="check"><span class="bx"></span>شروط تسمية المتغير وتدريب 3</button>
+      </div>
+      <div class="g2 grow">
+        <div class="card center tint"><span class="icon">➡️</span><p class="big">الحصة القادمة: ننشئ المتغير ونحسب به ونصنع عدّاداً مثل عدّاد الساعة الذكية ونقاط اللعبة</p></div>
+        <div class="card center" style="border-color:var(--ph-close)"><span class="icon">📚</span><p class="big">بعد الحصة: واجب منصة مدرستي</p><p class="sub">🔐 احفظ مشروعك باسمك ولا تنسخ مشروع زميلك</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= الحصة الثانية ================= -->
+
+<section class="slide" id="s8" data-p="2" data-from="0" data-to="6" data-ph="warm" data-title="التهيئة: من ذاكرة الحاسب إلى المتغير">
+  <div class="shead"></div>
+  <div class="pages">
+    <div class="pg">
+      <span class="bridge">🔁 نتذكّر من الصف الخامس: مكونات الحاسب الداخلية</span>
+      <h2>تذكرون هذا الجهاز؟ 🖥️ ماذا يوجد داخله؟ من يذكرها؟</h2>
+      <div class="row grow" style="align-items:center;gap:40px">
+        <div class="pc2">
+          <div class="mb2">
+            <div class="cmp cpu"><b>1</b><span class="die"></span></div>
+            <div class="cmp ram"><b>2</b><i></i><i></i></div>
+            <div class="cmp hdd"><b>3</b><span class="plat"></span></div>
+            <div class="cmp psu"><b>4</b><span class="grill"></span></div>
+          </div>
+          <span class="pcl">اللوحة الأم</span>
+        </div>
+        <div class="g2 grow">
+          <button class="tile"><div class="ti"><div class="tf"><span class="tnum">1</span><span class="big" style="font-size:30px">ينفّذ الأوامر ويعالج البيانات</span></div><div class="tf tb2">المعالج</div></div></button>
+          <button class="tile"><div class="ti"><div class="tf"><span class="tnum">2</span><span class="big" style="font-size:30px">يحفظ البيانات مؤقتاً والحاسب يعمل</span></div><div class="tf tb2">الذاكرة RAM</div></div></button>
+          <button class="tile"><div class="ti"><div class="tf"><span class="tnum">3</span><span class="big" style="font-size:30px">يخزّن الملفات دائماً حتى بعد الإطفاء</span></div><div class="tf tb2">القرص الصلب</div></div></button>
+          <button class="tile"><div class="ti"><div class="tf"><span class="tnum">4</span><span class="big" style="font-size:30px">يمدّ المكونات بالكهرباء</span></div><div class="tf tb2">مزوّد الطاقة</div></div></button>
+        </div>
+      </div>
+    </div>
+    <div class="pg">
+      <span class="bridge">🔎 سؤال الفكرة</span>
+      <div class="mcq grow">
+        <p class="mq">ما الجزء المسؤول عن حفظ البيانات والحاسب <u>شغّال</u>؟</p>
+        <div class="choices">
+          <button class="ch big2">المعالج</button>
+          <button class="ch big2">القرص الصلب</button>
+          <button class="ch big2" data-ok>الذاكرة RAM</button>
+        </div>
+        <div class="fb fbram" hidden>
+          <div class="ramstick"><i></i><i></i><i></i><i></i><i></i><i></i><span>RAM</span></div>
+          <div class="col" style="gap:4px;text-align:right">
+            <p>👏 أحسنتم! الذاكرة RAM تحفظ البيانات والحاسب <b>يعمل</b>،<br>وتُمسح محتوياتها عندما <b>يُطفأ</b>.</p>
+            <p style="color:var(--var-d)">💡 وفيها يحفظ سكراتش <b>المتغيرات</b> أثناء تشغيل برنامجك!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pg">
+      <span class="bridge">💡 نربط الفكرة بدرسنا</span>
+      <h2>الذاكرة RAM خزانة… وكل متغير درج فيها</h2>
+      <div class="row grow" style="align-items:center;gap:36px">
+        <div class="col center" style="gap:14px">
+          <div class="cab" id="cab">
+            <div class="cabt">🟩 الذاكرة RAM</div>
+            <div class="drw"><span class="lab">النقاط</span><span class="vl" data-v="0">؟</span></div>
+            <div class="drw"><span class="lab">العمر</span><span class="vl" data-v="12">؟</span></div>
+            <div class="drw"><span class="lab">الاسم</span><span class="vl" data-v="سارة">؟</span></div>
+          </div>
+          <div class="row" style="gap:10px;justify-content:center">
+            <button class="rv small" id="cabRun">▶ شغّل البرنامج</button>
+            <button class="rv small" id="cabAdd">⭐ +1 نقطة</button>
+            <button class="rv small" id="cabOff">⏻ أطفئ الجهاز</button>
+          </div>
+          <div class="cablog" id="cabLog">اضغط «شغّل البرنامج»</div>
+        </div>
+        <table class="t map grow">
+          <tr><th>في الحاسب 🖥️</th><th>في البرمجة 🧩</th></tr>
+          <tr><td>الذاكرة RAM</td><td>مكان حفظ المتغيرات</td></tr>
+          <tr><td>الدرج</td><td><b>المتغير</b></td></tr>
+          <tr><td>الملصق على الدرج</td><td>اسم المتغير</td></tr>
+          <tr><td>ما بداخل الدرج</td><td>قيمة المتغير</td></tr>
+          <tr><td>الإطفاء يُفرغ الأدراج</td><td>لذلك نبدأ بـ (اجعل … مساوياً 0)</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="pg">
+      <span class="bridge">🔁 نتذكّر الحصة الماضية: المتغير</span>
+      <div class="mcq grow">
+        <span class="qn2">مراجعة 1 من 3</span>
+        <p class="mq">ما المتغير؟</p>
+        <div class="choices col1">
+          <button class="ch big2">رمز يمثّل إجراءً مثل + و −</button>
+          <button class="ch big2" data-ok>اسم لمكان في ذاكرة الحاسب نخزّن فيه البيانات</button>
+          <button class="ch big2">لبنة تحرّك الكائن</button>
+        </div>
+        <p class="fb" hidden>✔ المتغير له اسم فريد وقيمة، والرمز مثل + هو المعامل.</p>
+      </div>
+    </div>
+    <div class="pg">
+      <span class="bridge">🔁 المعاملات وأماكن القيم</span>
+      <div class="mcq grow">
+        <span class="qn2">مراجعة 2 من 3</span>
+        <p class="mq">أي لبنة تعطي الناتج 6؟</p>
+        <div class="choices">
+          <button class="ch"><div class="canvas lg"><div class="script"><span class="r op"><span class="i">2</span>-<span class="i">8</span></span></div></div></button>
+          <button class="ch" data-ok><div class="canvas lg"><div class="script"><span class="r op"><span class="i">8</span>-<span class="i">2</span></span></div></div></button>
+          <button class="ch"><div class="canvas lg"><div class="script"><span class="r op"><span class="i">8</span>/<span class="i">2</span></span></div></div></button>
+        </div>
+        <p class="fb" hidden>✔ القيمة الأولى 8 والثانية 2: <span class="ltr">8 - 2 = 6</span></p>
+      </div>
+    </div>
+    <div class="pg">
+      <span class="bridge">🔁 شروط التسمية</span>
+      <div class="mcq grow">
+        <span class="qn2">مراجعة 3 من 3</span>
+        <p class="mq">أي اسم يحقق شروط تسمية المتغير؟</p>
+        <div class="choices">
+          <button class="ch big2">عدد الخطوات!</button>
+          <button class="ch big2" data-ok>عدد_الخطوات</button>
+          <button class="ch big2">عدد-الخطوات</button>
+        </div>
+        <p class="fb" hidden>✔ أحرف وشرطة سفلية، واسمه يدل على محتواه.</p>
+      </div>
+    </div>
+    <div class="pg">
+      <span class="bridge">🧩 مشكلة اليوم</span>
+      <div class="row grow" style="align-items:center;justify-content:center;gap:60px">
+        <div class="watch"><div class="band t"></div><div class="face"><span class="lbw">👣 الخطوات</span><span class="num">2548</span></div><div class="band b"></div></div>
+        <div class="game"><div class="hud">⭐ النقاط: <b>37</b></div><span class="star">⭐</span><span class="pl">🤖</span></div>
+      </div>
+      <p class="big" style="text-align:center;font-size:48px">كيف تعرف الساعة عدد خطواتك؟ وكيف تجمع اللعبة نقاطك؟</p>
+      <button class="rv" data-show="w1">اكشف الفكرة</button>
+      <div class="ans big pop" id="w1" hidden style="align-self:center">متغير في الذاكرة اسمه <span class="ltr">steps</span> أو <span class="ltr">score</span> يبدأ من 0 ويزيد 1 في كل مرة: <b>العدّاد</b></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s9" data-p="2" data-from="6" data-to="7" data-ph="warm" data-title="عنوان الدرس وأهداف الحصة الثانية">
+  <div class="shead"></div>
+  <div class="pages">
+    <div class="pg">
+      <div class="titlebar">
+        <span class="sub">عنوان درسنا · الحصة الثانية</span>
+        <span class="huge">برمجة العمليات الحسابية</span>
+        <span class="big">سؤالنا: كيف نحفظ النتائج في متغير ونصنع عدّاداً؟</span>
+      </div>
+      <p class="big" style="text-align:center">📌 أهداف الحصة الثانية في 4 محطات:</p>
+      <div class="route grow" data-route="2"></div>
+    </div>
+    <div class="pg">
+      <h2>أنجح اليوم إذا… ✅</h2>
+      <div class="col grow">
+        <button class="check"><span class="bx"></span><b class="stn">1</b>أنشئ متغيراً وأهيّئه بلبنة (اجعل) وأعيد تسميته أو أحذفه</button>
+        <button class="check"><span class="bx"></span><b class="stn">2</b>أبرمج جمع رقمين يدخلهما المستخدم في المتغيرات x و y و sum</button>
+        <button class="check"><span class="bx"></span><b class="stn">3</b>أستخدم المتغير عدّاداً بلبنة (غيّر) وأرتّب مخططه الانسيابي</button>
+        <button class="check"><span class="bx"></span><b class="stn">4</b>أتتبّع تدريب 2 وأبرمج حاسبة العمر (تدريب 4)</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s10" data-p="2" data-from="7" data-to="12" data-ph="show" data-title="إنشاء المتغير وتهيئته وتعديله">
+  <div class="shead"></div>
+  <div class="pages">
+    <div class="pg" data-st="1">
+      <span class="bridge">🔗 العدّاد متغير… فكيف ننشئه؟</span>
+      <h2>أنا أعمل: إنشاء متغير (ص 146)</h2>
+      <div class="row grow" style="align-items:center;gap:40px">
+        <div class="col" style="font-size:26px;font-weight:600;gap:12px">
+          <span class="pill"><b class="stn">1</b>اضغط فئة <b>المتغيرات</b></span>
+          <span class="pill"><b class="stn">2</b>اضغط <b>إنشاء متغير</b></span>
+          <span class="pill"><b class="stn">3</b>تظهر نافذة <b>متغير جديد</b></span>
+          <span class="pill"><b class="stn">4</b>سمِّ المتغير <b class="ltr">counter</b></span>
+          <span class="pill"><b class="stn">5</b>اضغط <b>موافق</b></span>
+          <span class="pill"><b class="stn">6</b>فعّل مربع الاختيار لتظهر قيمته على المسرح</span>
+        </div>
+        <div class="col center grow">
+          <div class="dlg">
+            <div class="dh">متغير جديد <span>✕</span></div>
+            <div class="db">
+              <span class="dl">اسم المتغير الجديد:</span>
+              <span class="din ltr">counter <b class="stn">4</b></span>
+              <div class="drad"><span>◉ لجميع الكائنات</span><span>○ لهذا الكائن فقط</span></div>
+              <div class="dbt"><span class="ok">موافق <b class="stn">5</b></span><span>إلغاء الأمر</span></div>
+            </div>
+          </div>
+          <div class="monitor"><span class="ltr">counter</span><b>0</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="pg" data-st="1">
+      <h2>تهيئة متغير (ص 147)</h2>
+      <div class="defn"><span class="dd2">نعطي المتغير قيمة محددة في البداية بلبنة <span style="color:var(--var-d)">اجعل ( ) مساوياً ( )</span></span></div>
+      <div class="row grow" style="align-items:center;justify-content:center;gap:50px">
+        <div class="canvas lg"><div class="script"><div class="b var">اجعل <span class="dd">counter</span> مساوياً <span class="i">0</span></div></div></div>
+        <div class="col">
+          <div class="pill"><span class="e">🎯</span>يمكنك ضبط المتغير على أي رقم تريده</div>
+          <div class="pill"><span class="e">🔄</span>نضعها أول البرنامج حتى لا تبقى قيمة قديمة في الذاكرة</div>
+        </div>
+      </div>
+    </div>
+    <div class="pg" data-st="1">
+      <h2>تعديل متغير: إعادة تسميته أو حذفه (ص 147)</h2>
+      <div class="row grow" style="align-items:center;gap:40px">
+        <div class="col" style="font-size:26px;font-weight:600;gap:12px">
+          <span class="pill"><b class="stn">1</b>اضغط فئة لبنات <b>المتغيرات</b></span>
+          <span class="pill"><b class="stn">2</b>اضغط <b>زر الفأرة الأيمن</b> على المتغير الذي تريد تعديله</span>
+          <span class="pill"><b class="stn">3</b>اضغط <b>إعادة تسمية المتغير</b> لتغيير اسمه</span>
+          <span class="pill"><b class="stn">4</b>أو <b>حذف المتغير "counter"</b> إذا أردت حذفه</span>
+        </div>
+        <div class="vpal">
+          <div class="vcat"><i></i>المتغيرات <b class="stn">1</b></div>
+          <div class="vrow"><span class="vrep">counter</span><span class="cur">🖱️</span><b class="stn">2</b></div>
+          <div class="cmenu">
+            <span>إعادة تسمية المتغير <b class="stn">3</b></span>
+            <span>حذف المتغير "counter" <b class="stn">4</b></span>
+          </div>
+          <div class="vrow"><span class="vrep" style="opacity:.6">my variable</span></div>
+        </div>
+      </div>
+      <p class="ans" style="align-self:center">✍️ تطبيق سريع: غيّر اسم <span class="ltr">counter</span> إلى <span class="ltr">score</span> ثم أعده</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s11" data-p="2" data-from="12" data-to="22" data-ph="show" data-title="العمليات بالمتغيرات والعدّاد">
+  <div class="shead"></div>
+  <div class="pages">
+    <div class="pg" data-st="2">
+      <span class="bridge">🔗 أنشأنا المتغير… الآن نحسب به</span>
+      <h2>نحن نعمل: العمليات الحسابية بالمتغيرات (ص 148)</h2>
+      <div class="row grow" style="align-items:center;gap:40px">
+        <div class="canvas md">
+          <div class="script">
+            <div class="b ev hat">عند نقر <svg class="flag"><use href="#flag"/></svg></div>
+            <div class="b sn">اسأل <span class="i">ما الرقم الأول؟</span> وانتظر</div>
+            <div class="b var">اجعل <span class="dd">x</span> مساوياً <span class="r sn">الإجابة</span></div>
+            <div class="b sn">اسأل <span class="i">ما الرقم الثاني؟</span> وانتظر</div>
+            <div class="b var">اجعل <span class="dd">y</span> مساوياً <span class="r sn">الإجابة</span></div>
+            <div class="b var">اجعل <span class="dd">sum</span> مساوياً <span class="r op"><span class="r var">x</span>+<span class="r var">y</span></span></div>
+            <div class="b lk">قل <span class="r op">اربط <span class="i">النتيجة هي </span><span class="r var">sum</span></span> لمدة <span class="i">5</span> ثانية</div>
+          </div>
+        </div>
+        <div class="col grow center">
+          <div class="pill" style="font-size:24px"><span class="e">📥</span>يطلب رقمين ويخزّن كل رقم في متغير</div>
+          <div class="pill" style="font-size:24px"><span class="e">➕</span>يخزّن ناتج الجمع في متغير مختلف <span class="ltr">sum</span></div>
+          <p class="big">اختبره بأرقام مختلفة</p>
+          <div class="sim">
+            <label for="sx">الرقم الأول<input id="sx" type="number" value="3"></label>
+            <label for="sy">الرقم الثاني<input id="sy" type="number" value="2"></label>
+          </div>
+          <div class="speech" id="sumOut">النتيجة هي 5</div>
+        </div>
+      </div>
+    </div>
+    <div class="pg" data-st="3">
+      <span class="bridge">🔗 نعود إلى سؤالنا: كيف يعمل العدّاد؟</span>
+      <h2>العدّاد في حياتنا: جرّب بنفسك</h2>
+      <div class="g2 grow">
+        <div class="card center">
+          <div class="watch"><div class="band t"></div><div class="face"><span class="lbw">👣 الخطوات</span><span class="num" id="wNum">0</span></div><div class="band b"></div></div>
+          <div class="row" style="gap:12px;justify-content:center"><button class="rv" id="wStep">👟 خطوة</button><button class="rv small" id="wReset">↺ يوم جديد</button></div>
+          <div class="canvas md"><div class="script"><div class="b var" id="wChg">غيّر <span class="dd">الخطوات</span> بمقدار <span class="i">1</span></div></div><div class="script"><div class="b var" id="wSet">اجعل <span class="dd">الخطوات</span> مساوياً <span class="i">0</span></div></div></div>
+        </div>
+        <div class="card center">
+          <div class="game"><div class="hud">⭐ النقاط: <b id="gNum">0</b></div><span class="star" id="gStar">⭐</span><span class="pl">🤖</span></div>
+          <div class="row" style="gap:12px;justify-content:center"><button class="rv" id="gGo">⭐ اجمع نجمة</button><button class="rv small" id="gReset">↺ لعبة جديدة</button></div>
+          <div class="canvas md"><div class="script"><div class="b var" id="gChg">غيّر <span class="dd">النقاط</span> بمقدار <span class="i">1</span></div></div><div class="script"><div class="b var" id="gSet">اجعل <span class="dd">النقاط</span> مساوياً <span class="i">0</span></div></div></div>
+        </div>
+      </div>
+      <p class="sub" style="text-align:center">العدّاد: متغير نهيّئه بـ (اجعل … 0) ثم نزيده بـ (غيّر … بمقدار 1) في كل مرة</p>
+    </div>
+    <div class="pg" data-st="3">
+      <div class="aphead"><span class="apptag">✍️ تطبيق</span><h2>اللبنة الناقصة ❓ أي لبنة تزيد العدّاد كلما لمست الدجاجة البيضة؟</h2></div>
+      <div class="mcq miss2 grow">
+        <div class="row" style="align-items:center;gap:60px;justify-content:center"><div class="canvas md"><div class="script"><div class="b ev hat">عند نقر <svg class="flag"><use href="#flag"/></svg></div><div class="b var">اجعل <span class="dd">counter</span> مساوياً <span class="i">0</span></div><div class="b lk">اظهر</div><div class="cb ctl"><div class="ct">كرّر باستمرار</div><div class="cm"><div class="arm"></div><div class="inner"><div class="script"><div class="cb ctl"><div class="ct">إذا <span class="h sn">ملامس لـ <span class="dd">Hen</span> ؟</span></div><div class="cm"><div class="arm"></div><div class="inner"><div class="script"><div class="b miss">؟</div><div class="fillb"><div class="b var">غيّر <span class="dd">counter</span> بمقدار <span class="i">1</span></div></div><div class="b lk">اختفِ</div></div></div></div><div class="cbt"></div></div></div></div></div><div class="cbt">↻</div></div></div></div><div class="choices col1" style="width:auto"><button class="ch"><div class="canvas md"><div class="script"><div class="b var">اجعل <span class="dd">counter</span> مساوياً <span class="i">1</span></div></div></div></button><button class="ch" data-ok><div class="canvas md"><div class="script"><div class="b var">غيّر <span class="dd">counter</span> بمقدار <span class="i">1</span></div></div></div></button><button class="ch"><div class="canvas md"><div class="script"><div class="b var">غيّر <span class="dd">counter</span> بمقدار <span class="i ltr">-1</span></div></div></div></button><button class="ch"><div class="canvas md"><div class="script"><div class="b lk">قل <span class="r var">counter</span></div></div></div></button></div></div>
+        <p class="fb" hidden>✔ (غيّر بمقدار 1) تضيف 1 في كل لمسة، أما (اجعل مساوياً 1) فتُبقيه 1 دائماً.</p>
+      </div>
+      <div class="act" data-min="2"><button class="actgo">▶ شغّل مؤقت النشاط · 2 د</button><div class="actbar"><div class="actfill"></div></div><span class="actclock">02:00</span></div>
+    </div>
+    <div class="pg" data-st="3">
+      <div class="aphead"><span class="apptag">✍️ تطبيق</span><h2>اللبنة الناقصة ❓ أي لبنة تجعل العدّاد يبدأ من الصفر في كل لعبة؟</h2></div>
+      <div class="mcq miss2 grow">
+        <div class="row" style="align-items:center;gap:60px;justify-content:center"><div class="canvas md"><div class="script"><div class="b ev hat">عند نقر <svg class="flag"><use href="#flag"/></svg></div><div class="b miss">؟</div><div class="fillb"><div class="b var">اجعل <span class="dd">counter</span> مساوياً <span class="i">0</span></div></div><div class="b lk">اظهر</div><div class="cb ctl"><div class="ct">كرّر باستمرار</div><div class="cm"><div class="arm"></div><div class="inner"><div class="script"><div class="cb ctl"><div class="ct">إذا <span class="h sn">ملامس لـ <span class="dd">Hen</span> ؟</span></div><div class="cm"><div class="arm"></div><div class="inner"><div class="script"><div class="b var">غيّر <span class="dd">counter</span> بمقدار <span class="i">1</span></div><div class="b lk">اختفِ</div></div></div></div><div class="cbt"></div></div></div></div></div><div class="cbt">↻</div></div></div></div><div class="choices col1" style="width:auto"><button class="ch"><div class="canvas md"><div class="script"><div class="b var">غيّر <span class="dd">counter</span> بمقدار <span class="i">0</span></div></div></div></button><button class="ch"><div class="canvas md"><div class="script"><div class="b lk">اختفِ</div></div></div></button><button class="ch" data-ok><div class="canvas md"><div class="script"><div class="b var">اجعل <span class="dd">counter</span> مساوياً <span class="i">0</span></div></div></div></button></div></div>
+        <p class="fb" hidden>✔ (اجعل counter مساوياً 0) تهيّئ العدّاد في بداية اللعبة.</p>
+      </div>
+      
+    </div>
+    <div class="pg" data-st="3">
+      <h2>تصحيح ورقة العمل: رتّب المخطط الانسيابي للعبة جمع البيض (ص 149)</h2>
+      <p class="sub" style="text-align:center">اكتب رقم كل عنصر حسب ترتيبه في ورقتك، ثم نكشف الترتيب الصحيح</p>
+      <div class="scat grow" id="scat">
+        <div class="sc ov" style="--sx:70%;--sy:62%;--ox:82%;--oy:2%;--r:-6deg"><b>1</b>البداية</div>
+        <div class="sc rc" style="--sx:4%;--sy:8%;--ox:80%;--oy:38%;--r:5deg"><b>2</b>حرّك الدجاجة</div>
+        <div class="sc dm" style="--sx:36%;--sy:4%;--ox:48%;--oy:30%;--r:-3deg"><b>3</b>هل لمست "البيضة" الدجاجة؟</div>
+        <div class="sc rc" style="--sx:64%;--sy:10%;--ox:20%;--oy:38%;--r:4deg"><b>4</b>غيّر "العداد" بمقدار 1</div>
+        <div class="sc rc" style="--sx:30%;--sy:66%;--ox:20%;--oy:74%;--r:-5deg"><b>5</b>أخفِ البيضة</div>
+        <div class="sc dm" style="--sx:2%;--sy:52%;--ox:48%;--oy:68%;--r:6deg"><b>6</b>عدد البيض = الجواب؟</div>
+        <span class="fla" style="left:88%;top:23%">↓</span>
+        <span class="fla" style="left:75%;top:44%">←</span>
+        <span class="fla" style="left:40%;top:40%">←<small>نعم</small></span>
+        <span class="fla" style="left:28%;top:59%">↓</span>
+        <span class="fla" style="left:40%;top:80%">→</span>
+        <span class="fla tagn" style="left:53%;top:15%">لا ↩ إلى 2</span>
+        <span class="fla tagn" style="left:73%;top:80%">لا ↩ إلى 2</span>
+      </div>
+      <div class="row" style="justify-content:center;gap:14px">
+        <button class="rv" id="scatGo">اكشف الترتيب الصحيح</button>
+        <button class="rv small" id="scatBack">بعثرها من جديد</button>
+      </div>
+      
+    </div>
+    <div class="pg" data-st="3">
+      <h2>المقطع البرمجي للكائن Egg ولبنة غيّر (ص 149–150)</h2>
+      <div class="row grow" style="align-items:center;gap:30px">
+        <div class="col center">
+          <span class="tag">كما في الكتاب ص 149</span>
+          <div class="canvas md">
+            <div class="script">
+              <div class="b ev hat">عند نقر <svg class="flag"><use href="#flag"/></svg></div>
+              <div class="b var">اجعل <span class="dd">counter</span> مساوياً <span class="i">0</span></div>
+              <div class="b lk">اظهر</div>
+              <div class="cb ctl"><div class="ct">كرّر باستمرار</div><div class="cm"><div class="arm"></div><div class="inner"><div class="script">
+                <div class="cb ctl"><div class="ct">إذا <span class="h sn">ملامس لـ <span class="dd">Hen</span> ؟</span></div><div class="cm"><div class="arm"></div><div class="inner"><div class="script">
+                  <div class="b var">اجعل <span class="dd">counter</span> مساوياً <span class="r op"><span class="r var">counter</span>+<span class="i">1</span></span></div>
+                  <div class="b lk">اختفِ</div>
+                </div></div></div><div class="cbt"></div></div>
+              </div></div></div><div class="cbt">↻</div></div>
+            </div>
+          </div>
+        </div>
+        <span class="arw" style="font-size:60px">=</span>
+        <div class="col center grow">
+          <span class="tag">لبنة غيّر ص 150</span>
+          <div class="canvas lg"><div class="script"><div class="b var">غيّر <span class="dd">counter</span> بمقدار <span class="i">1</span></div></div></div>
+          <p class="big" style="text-align:center">تزيد قيمة counter بمقدار 1<br>في كل مرة تلمس الدجاجة بيضة</p>
+          <div class="g2" style="width:100%">
+            <div class="card center"><b>اجعل … مساوياً</b><p class="sub">تضع قيمة جديدة (للتهيئة)</p></div>
+            <div class="card center"><b>غيّر … بمقدار</b><p class="sub">تضيف إلى القيمة الحالية</p></div>
+          </div>
+          <p class="sub" style="text-align:center">💡 لعدة بيضات نستخدم النسخ المكررة للكائن Egg</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s12" data-p="2" data-from="22" data-to="34" data-ph="do" data-title="تطبيقات: لعبة بسيطة وتدريب 2 وتدريب 4">
+  <div class="shead"></div>
+  <div class="pages">
+    <div class="pg" data-st="4">
+      <div class="aphead"><span class="apptag">✍️ تطبيق</span><h2>برنامج لعبة بسيطة: اصطد القط 🐱</h2></div>
+      <div class="row grow" style="align-items:center;gap:40px">
+        <div class="canvas lg" style="flex-direction:column">
+          <div class="script"><div class="b ev hat">عند نقر <svg class="flag"><use href="#flag"/></svg></div><div class="b var" id="kSet">اجعل <span class="dd">النقاط</span> مساوياً <span class="i">0</span></div></div>
+          <div class="script"><div class="b ev hat">عند النقر على هذا الكائن</div><div class="b var" id="kChg">غيّر <span class="dd">النقاط</span> بمقدار <span class="i">1</span></div></div>
+        </div>
+        <div class="col center grow">
+          <div class="kstage"><div class="monitor"><span>النقاط</span><b id="kNum">0</b></div><button class="cat" id="kCat" aria-label="القط">🐱</button></div>
+          <div class="row" style="gap:12px;justify-content:center"><button class="rv" id="kFlag">🚩 العلم الأخضر</button><span class="sub">ثم اضغط القط</span></div>
+        </div>
+      </div>
+      <div class="act" data-min="2"><button class="actgo">▶ شغّل مؤقت النشاط · 2 د</button><div class="actbar"><div class="actfill"></div></div><span class="actclock">02:00</span></div>
+    </div>
+    <div class="pg" data-st="4">
+      <div class="aphead"><span class="apptag">✍️ تطبيق</span><h2>تتبّع المتغيرات · 🔵 المستوى البسيط</h2></div>
+      <div class="row grow" style="align-items:center;gap:50px;justify-content:center">
+        <div class="canvas lg">
+          <div class="script">
+            <div class="b ev hat">عند نقر <svg class="flag"><use href="#flag"/></svg></div>
+            <div class="b var">اجعل <span class="dd">النقاط</span> مساوياً <span class="i">0</span></div>
+            <div class="cb ctl"><div class="ct">كرّر <span class="i">3</span> مرة</div><div class="cm"><div class="arm"></div><div class="inner"><div class="script">
+              <div class="b var">غيّر <span class="dd">النقاط</span> بمقدار <span class="i">2</span></div>
+            </div></div></div><div class="cbt">↻</div></div>
+          </div>
+        </div>
+        <div class="col">
+          <p class="big">كم قيمة النقاط في النهاية؟</p>
+          <div class="opts" data-quiz><button class="opt">2</button><button class="opt">3</button><button class="opt" data-correct>6</button></div>
+          <button class="rv small" data-show="lv1">اكشف التتبّع</button>
+          <p class="ans big pop ltr" id="lv1" hidden>0 → 2 → 4 → 6</p>
+        </div>
+      </div>
+    </div>
+    <div class="pg" data-st="4">
+      <div class="aphead"><span class="apptag">✍️ تطبيق</span><h2>تتبّع المتغيرات · 🟢 المستوى المتقدم (تدريب 2 ص 151)</h2></div>
+      <div class="row grow" style="align-items:center;gap:40px">
+        <div class="canvas lg">
+          <div class="script">
+            <div class="b ev hat">عند نقر <svg class="flag"><use href="#flag"/></svg></div>
+            <div class="b var">اجعل <span class="dd">x</span> مساوياً <span class="i">3</span></div>
+            <div class="b var">اجعل <span class="dd">y</span> مساوياً <span class="i">0</span></div>
+            <div class="cb ctl"><div class="ct">كرّر حتى <span class="h op"><span class="r var">y</span>&gt;<span class="i">3</span></span></div><div class="cm"><div class="arm"></div><div class="inner"><div class="script">
+              <div class="b var">غيّر <span class="dd">x</span> بمقدار <span class="i">1</span></div>
+              <div class="b var">غيّر <span class="dd">y</span> بمقدار <span class="i">2</span></div>
+            </div></div></div><div class="cbt">↻</div></div>
+          </div>
+        </div>
+        <div class="col grow">
+          <div class="opts" data-quiz>
+            <button class="opt">x = 3, y = 4</button>
+            <button class="opt" data-correct>x = 5, y = 4</button>
+            <button class="opt">x = 6, y = 5</button>
+          </div>
+          <button class="rv" data-show="t2">اكشف التتبّع</button>
+          <table class="t num pop" id="t2" hidden>
+            <tr><th>الخطوة</th><th>x</th><th>y</th><th>y أكبر من 3؟</th></tr>
+            <tr><td>البداية</td><td>3</td><td>0</td><td>لا</td></tr>
+            <tr><td>الدورة 1</td><td>4</td><td>2</td><td>لا</td></tr>
+            <tr><td>الدورة 2</td><td>5</td><td>4</td><td>نعم ← يتوقف</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="pg" data-st="4">
+      <div class="aphead"><span class="apptag">✍️ تطبيق</span><h2>تدريب 4 ص 152: أنشئ خوارزمية ومقطعاً برمجياً لحساب عمرك</h2></div>
+      <div class="steps grow" id="algo">
+        <div class="st in ghost"><span class="k in">مدخل</span><b>1</b><p>يطلب سنة ميلادك</p><div class="blk"><div class="canvas md"><div class="script"><div class="b sn">اسأل <span class="i">ما سنة ميلادك؟</span> وانتظر</div><div class="b var">اجعل <span class="dd">الميلاد</span> مساوياً <span class="r sn">الإجابة</span></div></div></div></div></div>
+        <div class="st in ghost"><span class="k in">مدخل</span><b>2</b><p>يطلب السنة الحالية</p><div class="blk"><div class="canvas md"><div class="script"><div class="b sn">اسأل <span class="i">ما السنة الحالية؟</span> وانتظر</div><div class="b var">اجعل <span class="dd">السنة</span> مساوياً <span class="r sn">الإجابة</span></div></div></div></div></div>
+        <div class="st pr ghost"><span class="k pr">معالجة</span><b>3</b><p>يطرح: السنة − الميلاد</p><div class="blk"><div class="canvas md"><div class="script"><div class="b var">اجعل <span class="dd">العمر</span> مساوياً <span class="r op"><span class="r var">السنة</span>-<span class="r var">الميلاد</span></span></div></div></div></div></div>
+        <div class="st out ghost"><span class="k out">مخرج</span><b>4</b><p>يقول الكائن النتيجة</p><div class="blk"><div class="canvas md"><div class="script"><div class="b lk">قل <span class="r op">اربط <span class="i">عمرك هو </span><span class="r var">العمر</span></span></div></div></div></div></div>
+      </div>
+      <div class="row" style="justify-content:center;gap:16px;align-items:center">
+        <button class="rv" id="algoNext">اكشف لبنات الخطوة التالية</button>
+        <button class="rv small" id="algoReset">من جديد</button>
+        <div class="sim" style="margin-inline-start:30px"><label for="by">سنة الميلاد<input id="by" type="number" value="2014"></label><label for="cy">السنة الحالية<input id="cy" type="number" value="2026"></label></div>
+        <div class="speech" id="simOut">عمرك هو 12</div>
+      </div>
+    </div>
+    <div class="pg" data-st="4">
+      <div class="aphead"><span class="apptag">✍️ تطبيق</span><h2>تدريب 4: برمج حاسبة العمر في مسارك</h2></div>
+      <p class="pathwho">📌 مسارك = لون تقييمك الذاتي في الحصة الأولى، <b>والمعلم يوجّهك ويؤكده</b></p>
+      <div class="g3 grow">
+        <div class="path2 blue"><span class="ph">🔵 الانطلاق</span><p>أُكمل لبنة الطرح الناقصة في مقطع جاهز</p><div class="canvas md"><div class="script"><div class="b var">اجعل <span class="dd">العمر</span> مساوياً <span class="b miss" style="min-width:120px;min-height:34px;font-size:22px">؟</span></div></div></div></div>
+        <div class="path2 yellow"><span class="ph">🟡 الإتقان</span><p>أبني مقطع حساب العمر كاملاً وأختبره</p><div class="canvas md"><div class="script"><span class="r op"><span class="r var">السنة</span>-<span class="r var">الميلاد</span></span></div></div></div>
+        <div class="path2 green"><span class="ph">🟢 الابتكار</span><p>أضيف حساب عمري في عام 2030</p><div class="canvas md"><div class="script"><span class="r op"><span class="i">2030</span>-<span class="r var">الميلاد</span></span></div></div></div>
+      </div>
+      <div class="row" style="justify-content:center;gap:14px;flex-wrap:wrap">
+        <span class="amb">🎖️ سفراء البرمجة يساندون زملاءهم</span>
+        <span class="dojo">⭐ كل طالب يصل إلى الناتج الصحيح ويشرح سبب ترتيب اللبنات يحصل على +1 في كلاس دوجو</span>
+      </div>
+      <div class="act" data-min="6"><button class="actgo">▶ شغّل مؤقت النشاط · 6 د</button><div class="actbar"><div class="actfill"></div></div><span class="actclock">06:00</span></div>
+    </div>
+    <div class="pg" data-st="4">
+      <h2>كيف يُقدَّر برنامجك؟</h2>
+      <table class="t rub big5">
+        <tr><td style="background:#D6F5E3">متميز</td><td>يعمل + إضافة من عندي</td></tr>
+        <tr><td style="background:#E8F7D0">متقدم</td><td>يعمل مع قيمتين مختلفتين</td></tr>
+        <tr><td style="background:#FFF1C2">متمكن</td><td>يعمل مع قيمة واحدة</td></tr>
+        <tr><td style="background:#FFE2C2">مبتدئ</td><td>لبنة ناقصة أو في غير مكانها</td></tr>
+        <tr><td style="background:#FFD6D6">ضعيف</td><td>لا يعمل</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s13" data-p="2" data-from="34" data-to="37" data-ph="do" data-title="تقويم الأقران: حاسبة العمر">
+  <div class="shead"></div>
+  <div class="pages">
+    <div class="pg" data-st="4">
+      <h2>تقويم الأقران: افحص <span style="color:var(--accent)">حاسبة العمر</span> عند زميلك</h2>
+      <p class="sub" style="text-align:center">بادل زميلك الجهاز · دقيقة لكل واحد · ضع ✔ لكل سؤال</p>
+      <div class="g3 grow">
+        <button class="check pc3"><span class="bx"></span><span class="icon">▶️</span>هل يعمل البرنامج عند نقر العلم؟</button>
+        <button class="check pc3"><span class="bx"></span><span class="icon">🔢</span>أدخل <span class="ltr">2014</span> ثم <span class="ltr">2026</span><br>هل ظهر العمر <span class="ltr">12</span>؟</button>
+        <button class="check pc3"><span class="bx"></span><span class="icon">🏷️</span>هل أسماء المتغيرات واضحة؟</button>
+      </div>
+      <div class="row" style="justify-content:center;gap:20px">
+        <span class="pill" style="background:#E6F6EE;border-color:var(--ok);font-size:30px">3 ✔ ← 👍 ممتاز</span>
+        <span class="pill" style="background:#FFF6DC;border-color:#F1C24A;font-size:30px">أقل من 3 ← ✋ ساعده يعدّل</span>
+      </div>
+      <div class="act" data-min="3"><button class="actgo">▶ شغّل مؤقت النشاط · 3 د</button><div class="actbar"><div class="actfill"></div></div><span class="actclock">03:00</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s14" data-p="2" data-from="37" data-to="43" data-ph="close" data-title="بطاقة الخروج وماذا تعلمنا">
+  <div class="shead"></div>
+  <div class="pages">
+    <div class="pg">
+      <h2>بطاقة الخروج 🎟️</h2>
+      <div class="g2 grow">
+        <div class="card center" style="border-color:var(--ph-show);border-width:4px"><span class="tag">المستوى الأول</span><span class="icon" style="font-size:90px">✏️</span><p class="big">المعامل · اسم المتغير · لبنة العدّاد</p></div>
+        <div class="card center" style="border-color:var(--ph-close);border-width:4px"><span class="tag">المستوى الثاني</span><span class="icon" style="font-size:90px">🕵️</span><p class="big">اكتشف الخطأ وصحّحه</p></div>
+      </div>
+      <p class="sub" style="text-align:center">أجب في البطاقة الورقية ثم ظلّل مستواك في التقييم الذاتي</p>
+      <div class="act" data-min="3"><button class="actgo">▶ شغّل مؤقت النشاط · 3 د</button><div class="actbar"><div class="actfill"></div></div><span class="actclock">03:00</span></div>
+    </div>
+    <div class="pg">
+      <h2>قيّم نفسك</h2>
+      <div class="self grow">
+        <button class="g" data-self><span style="font-size:80px">🟢</span><span>أتقنت تماماً</span><span class="cnt">0</span></button>
+        <button class="y" data-self><span style="font-size:80px">🟡</span><span>أتقنت الأساسيات</span><span class="cnt">0</span></button>
+        <button class="rd" data-self><span style="font-size:80px">🔴</span><span>أحتاج لدعم</span><span class="cnt">0</span></button>
+      </div>
+    </div>
+    <div class="pg">
+      <h2>ماذا تعلمنا في الدرس؟ ✅</h2>
+      <div class="g2">
+        <button class="check"><span class="bx"></span>المعاملات الرياضية والمنطقية ومكانها وأشكالها</button>
+        <button class="check"><span class="bx"></span>العمليات الحسابية في سكراتش وتدريب 1</button>
+        <button class="check"><span class="bx"></span>المتغير وشروط تسميته وتدريب 3</button>
+        <button class="check"><span class="bx"></span>إنشاء المتغير وتهيئته وتعديله</button>
+        <button class="check"><span class="bx"></span>العمليات الحسابية بالمتغيرات (sum)</button>
+        <button class="check"><span class="bx"></span>العدّاد ولبنة (غيّر) وتدريبا 2 و 4</button>
+      </div>
+      <div class="g2 grow">
+        <div class="card center tint"><span class="icon">⌚</span><p class="big">العدّاد في حياتنا: خطوات الساعة الذكية، ونقاط الألعاب، وعدد الحضور</p></div>
+        <div class="card center" style="border-color:var(--ph-show)"><span class="icon">➡️</span><p class="big">الدرس القادم: نوظّف المتغيرات والعمليات في مشاريع سكراتش أكبر</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s15" data-p="2" data-from="43" data-to="45" data-ph="close" data-title="ما بعد الحصة">
+  <div class="shead"></div>
+  <div class="pages">
+    <div class="pg">
+      <div class="thanks grow">
+        <div class="hw"><span style="font-size:90px">📚</span><span>حلّ الواجب الرقمي في منصة مدرستي</span></div>
+        <p class="ty">شكراً لكم… أبدعتم اليوم</p>
+        <p class="ty2">يا مبرمجي المستقبل 🌟</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div></main>
+
+<script>
+(function(){
+  var PH={warm:"التهيئة",show:"العرض","do":"الممارسة",close:"الغلق"};
+  var PHF={warm:"التهيئة والتشخيص",show:"العرض والنمذجة","do":"الممارسة والتطبيق",close:"التقويم والغلق"};
+  var PERIODS={1:[["warm",0,7],["show",7,22],["do",22,37],["close",37,45]],2:[["warm",0,7],["show",7,22],["do",22,37],["close",37,45]]};
+  var PNAME={1:"الحصة الأولى",2:"الحصة الثانية"};
+  function pad(n){return (n<10?"0":"")+n;}
+  var slides=[].slice.call(document.querySelectorAll(".slide"));
+  var jump=document.getElementById("jump");
+  var g1=document.createElement("optgroup");g1.label="الحصة الأولى";
+  var g2=document.createElement("optgroup");g2.label="الحصة الثانية";
+  function rng(i,page){var s=slides[i],p=s.querySelectorAll(".pg")[page||0];var d=(p&&p.dataset.ph)?p.dataset:s.dataset;return {f:+d.from,t:+d.to,ph:d.ph};}
+  var ST={1:[["➕","أعرّف المعاملات وأنواعها ومكانها وأشكالها"],["🧮","أنفّذ العمليات الحسابية في سكراتش"],["📦","أعرّف المتغير: اسمه وقيمته وأنواعه"],["🏷️","أسمّي المتغير وفق شروط التسمية"]],
+           2:[["🆕","أنشئ المتغير وأهيّئه وأعدّله"],["➕","أجري العمليات الحسابية بالمتغيرات"],["⌚","أستخدم المتغير عدّاداً بلبنة (غيّر)"],["🧪","أطبّق: تدريب 2 وحاسبة العمر"]]};
+  var STC=["#2E62D9","#0E9466","#D97706","#7B5CFF"];
+  function head(i,page){
+    var s=slides[i],p=+s.dataset.p,r=rng(i,page),f=r.f,t=r.t,ph=r.ph;
+    var pgEl=s.querySelectorAll(".pg")[page||0],st=pgEl&&pgEl.dataset.st?+pgEl.dataset.st:0;
+    var bar="";
+    if(st){for(var k=1;k<=4;k++)bar+='<span class="dot'+(k<st?' done':'')+(k===st?' cur':'')+'">'+k+'</span>';bar+='<span class="stx">المحطة '+st+': '+ST[p][st-1][1]+'</span>';}
+    else bar='<span class="ctx">'+(ph==="warm"?(i===0?"":"🔎 نستعد للدرس"):(ph==="close"?"✅ نختم ونقيّم ما تعلمناه":""))+'</span>';
+    s.querySelector(".shead").innerHTML='<span class="ltitle">برمجة العمليات الحسابية</span><div class="stbar">'+bar+'</div><span class="chip '+ph+'">'+PHF[ph]+'</span><span class="chip tchip">'+pad(f)+'–'+pad(t)+' د</span><span class="chip pgc" hidden></span>';
+  }
+  document.querySelectorAll(".route").forEach(function(el){
+    var p=+el.dataset.route;
+    el.innerHTML=ST[p].map(function(x,k){return '<div class="rs" style="--c:'+STC[k]+'"><span class="n">'+(k+1)+'</span><span class="ic">'+x[0]+'</span><p>'+x[1]+'</p></div>';}).join('<span class="ra">←</span>');
+  });
+  slides.forEach(function(s,i){
+    var p=+s.dataset.p;head(i,0);
+    var o=document.createElement("option");o.value=i;o.textContent=(i+1)+". "+s.dataset.title;(p===1?g1:g2).appendChild(o);
+  });
+  jump.appendChild(g1);jump.appendChild(g2);
+  document.querySelectorAll(".tl2").forEach(function(el){
+    var p=+el.dataset.period;
+    el.querySelector(".bars").innerHTML=PERIODS[p].map(function(sg){return '<div class="'+sg[0]+'" style="flex:'+(sg[2]-sg[1])+';background:var(--ph-'+sg[0]+')"><span>'+PH[sg[0]]+'</span><span>'+(sg[2]-sg[1])+' د</span></div>';}).join("");
+  });
+
+  /* navigation + fit */
+  var cur=-1,pg=0,stage=document.getElementById("stage"),frame=document.getElementById("frame");
+  function pagesOf(i){return slides[i].querySelectorAll(".pg");}
+  function fitFrame(){var sc=Math.min(stage.clientWidth/1600,stage.clientHeight/900);frame.style.transform="translate(-50%,-50%) scale("+sc+")";}
+  function fitPage(){
+    var s=slides[cur];if(!s)return;var box=s.querySelector(".pages"),p=pagesOf(cur)[pg];if(!p)return;
+    p.style.zoom=1;p.classList.add("nm");var need=p.scrollHeight,have=box.clientHeight;void p.offsetWidth;p.classList.remove("nm");
+    if(need>have+2&&have>0)p.style.zoom=Math.max(.6,(have-4)/need);
+  }
+  function show(i,page,fromHash){
+    i=Math.max(0,Math.min(slides.length-1,i));var n=pagesOf(i).length;
+    if(page===-1)page=n-1;page=Math.max(0,Math.min(n-1,page||0));cur=i;pg=page;
+    slides.forEach(function(s,k){s.classList.toggle("on",k===i);});
+    pagesOf(i).forEach(function(p,k){p.classList.toggle("on",k===page);});
+    head(i,page);think(pagesOf(i)[page]);
+    var pc=slides[i].querySelector(".pgc");pc.hidden=n<2;pc.textContent=(page+1)+" / "+n;
+    jump.value=i;
+    document.getElementById("pos").textContent=(i+1)+" / "+slides.length;
+    document.getElementById("prev").disabled=(i===0&&page===0);
+    document.getElementById("next").disabled=(i===slides.length-1&&page===n-1);
+    if(!fromHash&&location.hash!=="#s"+(i+1)){try{history.replaceState(null,"","#s"+(i+1));}catch(e){}}
+    fitPage();onSlideShown(i);
+  }
+  var GR=["linear-gradient(135deg,#7B5CFF,#2F9BFF)","linear-gradient(135deg,#00B39F,#2F9BFF)","linear-gradient(135deg,#FF8A3D,#FF4D8D)","linear-gradient(135deg,#F7B500,#FF6A3D)","linear-gradient(135deg,#22C55E,#0EA5E9)"];
+  document.querySelectorAll(".qf.front").forEach(function(f,k){f.style.background=GR[k%GR.length];});
+  var thinkT=null;
+  function think(p){
+    clearInterval(thinkT);
+    var q=p&&p.querySelector(".qc:not(.flipped)");if(!q)return;
+    var b=q.querySelector(".flip"),n=10;
+    function tk(){if(n>0){b.textContent="⏳ فكّر… "+n;b.classList.add("wait");n--;}else{clearInterval(thinkT);b.textContent="اكشف الإجابة";b.classList.remove("wait");}}
+    tk();thinkT=setInterval(tk,1000);
+  }
+  function step(d){var n=pagesOf(cur).length;
+    if(d>0){if(pg<n-1)show(cur,pg+1);else if(cur<slides.length-1)show(cur+1,0);}
+    else{if(pg>0)show(cur,pg-1);else if(cur>0)show(cur-1,-1);}}
+  function fromHash(){var m=/^#s(\d+)$/.exec(location.hash);var t=m?(+m[1]-1):0;if(t!==cur)show(t,0,true);}
+  jump.addEventListener("change",function(){show(+jump.value,0);jump.blur();});
+  document.getElementById("prev").onclick=function(){step(-1);};
+  document.getElementById("next").onclick=function(){step(1);};
+  window.addEventListener("hashchange",fromHash);
+  window.addEventListener("resize",function(){fitFrame();fitPage();});
+  document.addEventListener("keydown",function(e){
+    if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;
+    if(e.key==="ArrowLeft"||e.key==="PageDown"||e.key===" "){step(1);e.preventDefault();}
+    if(e.key==="ArrowRight"||e.key==="PageUp"){step(-1);e.preventDefault();}
+  });
+
+  /* interactions */
+  document.addEventListener("click",function(e){
+    var b=e.target.closest("[data-show]");
+    if(b){var t=document.getElementById(b.dataset.show);if(t){var open=t.hidden;t.hidden=!open;if(open){t.classList.remove("pop");void t.offsetWidth;t.classList.add("pop");}if(!b.dataset.l)b.dataset.l=b.textContent;b.textContent=open?"إخفاء":b.dataset.l;setTimeout(fitPage,20);}return;}
+    var f=e.target.closest(".flip");
+    if(f){clearInterval(thinkT);f.classList.remove("wait");var q=f.closest(".qc");q.classList.toggle("flipped");f.textContent=q.classList.contains("flipped")?"عودة للسؤال":"اكشف الإجابة";return;}
+    var tl=e.target.closest(".tile");if(tl){tl.classList.toggle("flipped");return;}
+    var ck=e.target.closest(".check");if(ck){ck.classList.toggle("done");return;}
+    var jb=e.target.closest(".judge button");
+    if(jb){var j=jb.closest(".judge");var good=jb.dataset.a===j.dataset.ok;j.classList.remove("right","wrong");j.classList.add(good?"right":"wrong");
+      j.querySelector(".why").textContent=(j.dataset.ok==="1"?"✔ يحقق الشروط: ":"✖ لا يحقق: ")+j.dataset.why;return;}
+    var ch=e.target.closest(".mcq .ch");
+    if(ch){var mq=ch.closest(".mcq");if(ch.hasAttribute("data-ok")){ch.classList.add("right");mq.classList.add("solved");mq.querySelector(".fb").hidden=false;setTimeout(fitPage,20);}else ch.classList.add("wrong");return;}
+    var op=e.target.closest("[data-quiz] .opt");if(op){op.classList.add(op.hasAttribute("data-correct")?"right":"wrong");return;}
+    var sf=e.target.closest("[data-self]");if(sf){var c=sf.querySelector(".cnt");c.textContent=(+c.textContent)+1;return;}
+  });
+  var algo=[].slice.call(document.querySelectorAll("#algo .st")),ai=0;
+  document.getElementById("algoNext").onclick=function(){if(ai<algo.length){algo[ai].classList.remove("ghost");ai++;setTimeout(fitPage,550);}};
+  document.getElementById("algoReset").onclick=function(){algo.forEach(function(s){s.classList.add("ghost");});ai=0;};
+
+  /* simulators */
+  function bindSim(a,b,out,fn){var A=document.getElementById(a),B=document.getElementById(b),O=document.getElementById(out);
+    function u(){var x=parseFloat(A.value),y=parseFloat(B.value);O.textContent=(isNaN(x)||isNaN(y))?"اكتب الرقمين أولاً":fn(x,y);}A.oninput=u;B.oninput=u;u();}
+  bindSim("sx","sy","sumOut",function(x,y){return "النتيجة هي "+(x+y);});
+  bindSim("by","cy","simOut",function(x,y){return "عمرك هو "+(y-x);});
+  (function(){var op="+",A=document.getElementById("ca"),B=document.getElementById("cb");
+    function up(){var a=parseFloat(A.value)||0,b=parseFloat(B.value)||0,r;
+      r=op==="+"?a+b:op==="-"?a-b:op==="*"?a*b:(b===0?"∞":a/b);if(typeof r==="number")r=Math.round(r*100)/100;
+      document.getElementById("cA").textContent=A.value;document.getElementById("cB").textContent=B.value;document.getElementById("cOp").textContent=op;document.getElementById("calcOut").textContent=r;}
+    document.querySelectorAll("#calcOps button").forEach(function(bt){bt.onclick=function(){op=bt.dataset.op;document.querySelectorAll("#calcOps button").forEach(function(x){x.classList.toggle("on",x===bt);});up();};});
+    A.oninput=up;B.oninput=up;up();})();
+  function flash(id){var e=document.getElementById(id);e.classList.remove("flash");void e.offsetWidth;e.classList.add("flash");}
+  (function(){var w=0,g=0,wn=document.getElementById("wNum"),gn=document.getElementById("gNum");
+    document.getElementById("wStep").onclick=function(){w++;wn.textContent=w;flash("wChg");};
+    document.getElementById("wReset").onclick=function(){w=0;wn.textContent=0;flash("wSet");};
+    var st=document.getElementById("gStar");
+    document.getElementById("gGo").onclick=function(){g++;gn.textContent=g;flash("gChg");st.classList.remove("got");void st.offsetWidth;st.classList.add("got");};
+    document.getElementById("gReset").onclick=function(){g=0;gn.textContent=0;flash("gSet");};
+    var kn=document.getElementById("kNum"),k=0;
+    document.getElementById("kCat").onclick=function(){k++;kn.textContent=k;flash("kChg");};
+    document.getElementById("kFlag").onclick=function(){k=0;kn.textContent=0;flash("kSet");};
+    var cab=document.getElementById("cab"),dv=[].slice.call(cab.querySelectorAll(".vl")),lg=document.getElementById("cabLog"),on=false;
+    function show(i,v){var d=dv[i];d.textContent=v;d.classList.toggle("e",v==="؟");var r=d.parentNode;r.classList.remove("pop2");void r.offsetWidth;r.classList.add("pop2");}
+    document.getElementById("cabRun").onclick=function(){on=true;dv.forEach(function(d,i){show(i,d.dataset.v);});lg.textContent="اجعل النقاط مساوياً 0 · اجعل العمر مساوياً 12 · اجعل الاسم مساوياً سارة";};
+    document.getElementById("cabAdd").onclick=function(){if(!on){lg.textContent="⚠️ الجهاز مطفأ! شغّل البرنامج أولاً";return;}show(0,String(+dv[0].textContent+1));lg.textContent="غيّر النقاط بمقدار 1";};
+    document.getElementById("cabOff").onclick=function(){on=false;dv.forEach(function(d,i){show(i,"؟");});lg.textContent="⏻ انطفأ الجهاز… فرغت الأدراج! لذلك نهيّئ المتغيرات في بداية كل برنامج";};
+    var sc=document.getElementById("scat");
+    document.getElementById("scatGo").onclick=function(){sc.classList.add("solved");};
+    document.getElementById("scatBack").onclick=function(){sc.classList.remove("solved");};})();
+
+  /* countdown timer */
+  var clock=document.getElementById("clock"),play=document.getElementById("tPlay"),remain=0,total=0,tid=null,actEl=null;
+  function mmss(x){return pad(Math.floor(x/60))+":"+pad(x%60);}
+  function draw(){clock.textContent=mmss(remain);clock.classList.toggle("low",remain>0&&remain<=30);play.textContent=tid?"⏸":"▶";
+    if(actEl){actEl.querySelector(".actclock").textContent=mmss(remain);actEl.querySelector(".actfill").style.width=(total?remain/total*100:0)+"%";actEl.classList.toggle("low",remain>0&&remain<=30);
+      actEl.querySelector(".actgo").textContent=tid?"⏸ إيقاف مؤقت":(remain>0?"▶ متابعة":"↺ أعِد المؤقت");}}
+  function tick(){if(remain>0)remain--;if(remain<=0){clearInterval(tid);tid=null;clock.classList.add("done");if(actEl){actEl.classList.add("done");actEl.classList.remove("run");}}draw();}
+  function start(sec,el){
+    if(actEl&&actEl!==el){actEl.classList.remove("run","done","low");var m=+actEl.dataset.min;actEl.querySelector(".actclock").textContent=mmss(m*60);actEl.querySelector(".actfill").style.width="100%";actEl.querySelector(".actgo").textContent="▶ شغّل مؤقت النشاط · "+m+" د";}
+    actEl=el||null;remain=sec;total=sec;clock.classList.remove("done");if(actEl){actEl.classList.remove("done");actEl.classList.add("run");}
+    clearInterval(tid);tid=setInterval(tick,1000);draw();}
+  document.querySelectorAll("[data-min]").forEach(function(b){if(b.classList.contains("act"))return;b.onclick=function(){start(+b.dataset.min*60,null);};});
+  document.addEventListener("click",function(e){var g=e.target.closest(".actgo");if(!g)return;var a=g.closest(".act");
+    if(a===actEl&&tid){clearInterval(tid);tid=null;draw();return;}
+    if(a===actEl&&remain>0){tid=setInterval(tick,1000);draw();return;}
+    start(+a.dataset.min*60,a);});
+  play.onclick=function(){if(tid){clearInterval(tid);tid=null;}else if(remain>0){clock.classList.remove("done");tid=setInterval(tick,1000);}draw();};
+  document.getElementById("tReset").onclick=function(){clearInterval(tid);tid=null;remain=0;clock.classList.remove("done");draw();};
+  draw();
+
+  /* real lesson clock: colour-only pace on the slide's time chip */
+  var lesson=null,stamps={},KEY="scratch-l2-lesson";
+  try{var ls=JSON.parse(localStorage.getItem(KEY));if(ls&&ls.p&&Date.now()-ls.t0<3600000){lesson=ls;stamps=ls.st||{};}}catch(e){}
+  var track=document.getElementById("track"),fill=document.getElementById("fill");
+  function persist(){try{if(lesson){lesson.st=stamps;localStorage.setItem(KEY,JSON.stringify(lesson));}else localStorage.removeItem(KEY);}catch(e){}}
+  function buildTrack(){track.querySelectorAll(".sg").forEach(function(x){x.remove();});
+    PERIODS[lesson?lesson.p:1].forEach(function(sg){var d=document.createElement("div");d.className="sg "+sg[0];d.style.flex=sg[2]-sg[1];track.insertBefore(d,fill);});}
+  function onSlideShown(i){if(!lesson)return;var s=slides[i];if(+s.dataset.p!==lesson.p)return;
+    var r=rng(i,pg),key=i+":"+r.f;
+    if(!stamps[key]){stamps[key]=Date.now();persist();}update();}
+  function update(){
+    var run=!!lesson;
+    document.querySelectorAll("[data-lesson]").forEach(function(b){b.hidden=run;});
+    document.getElementById("lpStop").hidden=!run;
+    document.querySelectorAll(".tchip").forEach(function(c){c.classList.remove("ok","early","late");});
+    if(!run){document.getElementById("lpEl").textContent="00:00";fill.style.width="0";return;}
+    var e=Math.max(0,Math.floor((Date.now()-lesson.t0)/1000)),em=e/60;
+    document.getElementById("lpEl").textContent=pad(Math.floor(e/60))+":"+pad(e%60);
+    fill.style.width=Math.min(e/2700,1)*100+"%";
+    var s=slides[cur];
+    if(s&&+s.dataset.p===lesson.p){var r=rng(cur,pg),f=r.f,t=r.t,c=s.querySelector(".tchip");
+      c.classList.add(em>t?"late":(em<f-0.5?"early":"ok"));}
+  }
+  function startLesson(p){lesson={p:p,t0:Date.now()};stamps={};persist();buildTrack();show(p===1?0:7,0);update();}
+  document.querySelectorAll("[data-lesson]").forEach(function(b){b.onclick=function(){startLesson(+b.dataset.lesson);};});
+  document.getElementById("lpStop").onclick=function(){lesson=null;stamps={};persist();buildTrack();update();};
+
+  fitFrame();buildTrack();fromHash();update();setInterval(update,1000);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){fitFrame();fitPage();});
+})();
+</script>
+</body>
+</html>
