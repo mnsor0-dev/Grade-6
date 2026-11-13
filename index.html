@@ -137,6 +137,17 @@ table.t th{background:#F1F4EF;font-family:var(--display)}
 .tile .tb2{transform:rotateY(180deg);background:#FFF6DC;border-color:#F1C24A;font:700 40px/1.3 var(--display)}
 .tile .hint{font-size:17px;color:var(--muted);font-weight:600}
 
+/* v12 */
+.dino{position:relative;width:440px;height:230px;border-radius:18px;background:#F7F7F7;border:4px solid #535353;overflow:hidden}
+.dino .hud{position:absolute;top:10px;left:14px;font:700 24px/1 var(--display);color:#535353}
+.dino .gnd{position:absolute;left:0;right:0;bottom:38px;height:3px;background:#535353}
+.dino .dn{position:absolute;right:300px;bottom:38px;font-size:70px;line-height:1;transform:scaleX(-1);transition:none}
+.dino .dn.up{animation:jmp .6s cubic-bezier(.2,.7,.4,1)}
+@keyframes jmp{50%{bottom:140px}}
+.dino .cac{position:absolute;bottom:38px;font-size:52px;line-height:1;animation:cac 2.6s linear infinite}
+@keyframes cac{from{right:-60px}to{right:460px}}
+.dino .cld{position:absolute;top:30px;font-size:40px;opacity:.6;animation:cac 9s linear infinite}
+.dino{cursor:pointer}
 /* v11 */
 .pc2{flex:none;position:relative;width:520px;height:420px;border-radius:20px;background:#3B4252;border:12px solid #232836;padding:16px}
 .mb2{position:relative;width:100%;height:100%;border-radius:10px;background:#17643F;background-image:linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px);background-size:20px 20px}
@@ -586,7 +597,7 @@ table.rub.big5 td{font-size:38px;padding:14px 26px;font-weight:700}
         <button class="check"><span class="bx"></span><b class="stn">1</b>أعرّف المعامِل، وأميّز المعاملات الرياضية من المنطقية، وأحدد مكانها وشكلها في سكراتش</button>
         <button class="check"><span class="bx"></span><b class="stn">2</b>أبرمج جمع عددين، وأنفّذ تدريب 1 بالمعاملات الحسابية</button>
         <button class="check"><span class="bx"></span><b class="stn">3</b>أعرّف المتغير وأذكر اسمه وقيمته وأنواعه</button>
-        <button class="check"><span class="bx"></span><b class="stn">4</b>أسمّي المتغيرات وفق شروط التسمية (تدريب 3)</button>
+        <button class="check"><span class="bx"></span><b class="stn">4</b>أسمّي المتغيرات وفق شروط التسمية</button>
       </div>
     </div>
   </div>
@@ -757,6 +768,21 @@ table.rub.big5 td{font-size:38px;padding:14px 26px;font-weight:700}
     </div>
     <div class="pg" data-st="3">
       <span class="bridge">🔗 حسبنا النواتج… لكن أين نحفظها؟</span>
+      <h2>كيف تتذكّر الساعة خطواتك؟ وكيف تتذكّر اللعبة نقاطك؟</h2>
+      <div class="g2 grow">
+        <div class="card center">
+          <div class="watch"><div class="band t"></div><div class="face"><span class="lbw">👣 الخطوات</span><span class="num" id="w1Num">0</span></div><div class="band b"></div></div>
+          <button class="rv" id="w1Step">👟 خطوة</button>
+        </div>
+        <div class="card center">
+          <div class="dino" id="dino"><div class="hud">النقاط: <b id="dNum">0</b></div><span class="dn">🦖</span><span class="cac">🌵</span><span class="cld">☁️</span><div class="gnd"></div></div>
+          <button class="rv" id="dJump">⬆️ اقفز</button>
+        </div>
+      </div>
+      <button class="rv" data-show="hk1">أين يُحفظ الرقم؟</button>
+      <p class="ans big pop" id="hk1" hidden style="align-self:center">في <b>متغير</b>: اسمه «الخطوات» أو «النقاط»، وقيمته تزيد 1 في كل مرة</p>
+    </div>
+    <div class="pg" data-st="3">
       <h2>المتغيرات في سكراتش (ص 144)</h2>
       <div class="defn"><span class="dw">المتغير</span><span class="dd2">اسم يشير إلى مكان محدد في ذاكرة الحاسب، يُستخدم لتخزين البيانات أثناء تنفيذ البرنامج</span></div>
       <div class="row grow" style="align-items:center;gap:40px">
@@ -799,7 +825,7 @@ table.rub.big5 td{font-size:38px;padding:14px 26px;font-weight:700}
   </div>
 </section>
 
-<section class="slide" id="s7" data-p="1" data-from="30" data-to="37" data-ph="do" data-title="شروط التسمية وتدريب 3 والغلق">
+<section class="slide" id="s7" data-p="1" data-from="30" data-to="37" data-ph="do" data-title="شروط التسمية والغلق">
   <div class="shead"></div>
   <div class="pages">
     <div class="pg" data-st="4">
@@ -814,22 +840,12 @@ table.rub.big5 td{font-size:38px;padding:14px 26px;font-weight:700}
     <div class="pg" data-st="4">
       <div class="aphead"><span class="apptag">✍️ تطبيق</span><h2>لعبة: هل يحقق الاسم شروط التسمية؟ ✔ أم ✖</h2></div>
       <div class="g4 grow">
-        <div class="judge" data-ok="0" data-why="فيه رمز ! والشرط: أحرف وأرقام وشرطة سفلية"><span class="nm ar">النقاط!</span><div class="bt"><button data-a="1">✔</button><button data-a="0">✖</button></div><span class="why"></span></div>
-        <div class="judge" data-ok="1" data-why="أحرف وشرطة سفلية ومعناه واضح"><span class="nm ar">سعر_الحليب</span><div class="bt"><button data-a="1">✔</button><button data-a="0">✖</button></div><span class="why"></span></div>
-        <div class="judge" data-ok="0" data-why="الشرطة العادية - ليست الشرطة السفلية _"><span class="nm ar">سعر-الحليب</span><div class="bt"><button data-a="1">✔</button><button data-a="0">✖</button></div><span class="why"></span></div>
-        <div class="judge" data-ok="0" data-why="غير فريد: لا يتكرر الاسم لمتغيرين"><span class="nm ar">العمر <span style="font-size:22px">مرتين</span></span><div class="bt"><button data-a="1">✔</button><button data-a="0">✖</button></div><span class="why"></span></div>
+        <div class="judge" data-ok="0" data-why="فيه رمز ؟ والشرط: أحرف وأرقام وشرطة سفلية"><span class="nm ar">الوزن؟</span><div class="bt"><button data-a="1">✔</button><button data-a="0">✖</button></div><span class="why"></span></div>
+        <div class="judge" data-ok="1" data-why="أحرف وشرطة سفلية ومعناه واضح"><span class="nm ar">عدد_الحضور</span><div class="bt"><button data-a="1">✔</button><button data-a="0">✖</button></div><span class="why"></span></div>
+        <div class="judge" data-ok="0" data-why="الشرطة العادية - ليست الشرطة السفلية _"><span class="nm ar">طول-الضلع</span><div class="bt"><button data-a="1">✔</button><button data-a="0">✖</button></div><span class="why"></span></div>
+        <div class="judge" data-ok="0" data-why="غير فريد: لا يتكرر الاسم لمتغيرين"><span class="nm ar">الوقت <span style="font-size:22px">مرتين</span></span><div class="bt"><button data-a="1">✔</button><button data-a="0">✖</button></div><span class="why"></span></div>
         </div>
       <div class="act" data-min="2"><button class="actgo">▶ شغّل مؤقت النشاط · 2 د</button><div class="actbar"><div class="actfill"></div></div><span class="actclock">02:00</span></div>
-    </div>
-    <div class="pg" data-st="4">
-      <div class="aphead"><span class="apptag">✍️ تطبيق</span><h2>تدريب 3 ص 152: اكتب اسماً لكل متغير ثم اقلب البطاقة</h2></div>
-      <div class="g3 grow">
-        <button class="tile"><div class="ti"><div class="tf"><span class="icon">🥛</span><span class="big">سعر زجاجة الحليب</span></div><div class="tf tb2">سعر_الحليب</div></div></button>
-        <button class="tile"><div class="ti"><div class="tf"><span class="icon">📝</span><span class="big">درجة الطالب في المادة</span></div><div class="tf tb2">الدرجة</div></div></button>
-        <button class="tile"><div class="ti"><div class="tf"><span class="icon">👨‍👩‍👧</span><span class="big">عدد أفراد الأسرة</span></div><div class="tf tb2">عدد_الأسرة</div></div></button>
-
-      </div>
-      <div class="act" data-min="3"><button class="actgo">▶ شغّل مؤقت النشاط · 3 د</button><div class="actbar"><div class="actfill"></div></div><span class="actclock">03:00</span></div>
     </div>
     <div class="pg" data-ph="close" data-from="37" data-to="45">
       <div class="qc">
@@ -868,7 +884,7 @@ table.rub.big5 td{font-size:38px;padding:14px 26px;font-weight:700}
         <button class="check"><span class="bx"></span>القيمة الأولى ثم المعامل ثم القيمة الثانية</button>
         <button class="check"><span class="bx"></span>برمجنا جمع عددين ونفّذنا تدريب 1</button>
         <button class="check"><span class="bx"></span>المتغير له اسم وقيمة: رقمي أو نصي</button>
-        <button class="check"><span class="bx"></span>شروط تسمية المتغير وتدريب 3</button>
+        <button class="check"><span class="bx"></span>شروط تسمية المتغير بالاستقراء</button>
       </div>
       <div class="g2 grow">
         <div class="card center tint"><span class="icon">➡️</span><p class="big">الحصة القادمة: ننشئ المتغير ونحسب به ونصنع عدّاداً مثل عدّاد الساعة الذكية ونقاط اللعبة</p></div>
@@ -1366,7 +1382,7 @@ table.rub.big5 td{font-size:38px;padding:14px 26px;font-weight:700}
       <div class="g2">
         <button class="check"><span class="bx"></span>المعاملات الرياضية والمنطقية ومكانها وأشكالها</button>
         <button class="check"><span class="bx"></span>العمليات الحسابية في سكراتش وتدريب 1</button>
-        <button class="check"><span class="bx"></span>المتغير وشروط تسميته وتدريب 3</button>
+        <button class="check"><span class="bx"></span>المتغير وشروط تسميته</button>
         <button class="check"><span class="bx"></span>إنشاء المتغير وتهيئته وتعديله</button>
         <button class="check"><span class="bx"></span>العمليات الحسابية بالمتغيرات (sum)</button>
         <button class="check"><span class="bx"></span>العدّاد ولبنة (غيّر) وتدريبا 2 و 4</button>
@@ -1473,6 +1489,13 @@ table.rub.big5 td{font-size:38px;padding:14px 26px;font-weight:700}
   document.getElementById("next").onclick=function(){step(1);};
   window.addEventListener("hashchange",fromHash);
   window.addEventListener("resize",function(){fitFrame();fitPage();});
+  var wheelT=0;
+  window.addEventListener("wheel",function(e){
+    if(e.ctrlKey||Math.abs(e.deltaY)<8)return;
+    if(e.target.closest&&e.target.closest("select,input,textarea"))return;
+    var now=Date.now();if(now-wheelT<650){e.preventDefault();return;}
+    wheelT=now;step(e.deltaY>0?1:-1);e.preventDefault();
+  },{passive:false});
   document.addEventListener("keydown",function(e){
     if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;
     if(e.key==="ArrowLeft"||e.key==="PageDown"||e.key===" "){step(1);e.preventDefault();}
@@ -1517,6 +1540,10 @@ table.rub.big5 td{font-size:38px;padding:14px 26px;font-weight:700}
     var st=document.getElementById("gStar");
     document.getElementById("gGo").onclick=function(){g++;gn.textContent=g;flash("gChg");st.classList.remove("got");void st.offsetWidth;st.classList.add("got");};
     document.getElementById("gReset").onclick=function(){g=0;gn.textContent=0;flash("gSet");};
+    var w1=0,w1n=document.getElementById("w1Num");document.getElementById("w1Step").onclick=function(){w1++;w1n.textContent=w1;};
+    var dn=document.querySelector("#dino .dn"),dN=document.getElementById("dNum"),dp=0;
+    function jump(){if(dn.classList.contains("up"))return;dn.classList.add("up");dp++;dN.textContent=dp;setTimeout(function(){dn.classList.remove("up");},600);}
+    document.getElementById("dJump").onclick=jump;document.getElementById("dino").onclick=jump;
     var kn=document.getElementById("kNum"),k=0;
     document.getElementById("kCat").onclick=function(){k++;kn.textContent=k;flash("kChg");};
     document.getElementById("kFlag").onclick=function(){k=0;kn.textContent=0;flash("kSet");};
